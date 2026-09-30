@@ -71,8 +71,10 @@ claude plugin uninstall rafi@rafi-tools
 
 | Command | Use it to | What happens |
 |---|---|---|
-| `/rafi:bootstrap-project <idea>` | Start a new project | Asks about name, purpose, framework, database, hosting, and auth. Shows a plan and waits for approval. Then scaffolds, fills the docs, writes the project README, asks you the PRD questions, installs packages, and runs the checks |
-| `/rafi:add-stack <name>` | Use a technology that is not in the list | Interviews you, reads the official docs, drafts a stack profile, and waits for approval |
+| `/rafi:brainstorm <idea>` | Shape a rough idea before building | Asks about users, flows, content, data, and constraints a few questions at a time. Proposes 2–3 approaches, then a full stack table (framework, database, and every capability). Writes `docs/brainstorm.md`. Writes no code |
+| `/rafi:bootstrap-project <idea>` | Start a new project | Reads `docs/brainstorm.md` if present, otherwise asks about name, purpose, framework, database, hosting, and auth. Proposes capabilities (styling, icons, CMS, search, …) as one table. Shows a plan and waits for approval. Then scaffolds, fills the docs, writes the project README, asks you the PRD questions, installs packages, and runs the checks |
+| `/rafi:add-stack <name>` | Use a framework or database that is not in the list | Interviews you, reads the official docs, drafts a stack profile, and waits for approval |
+| `/rafi:add-capability <concern>` | Add icons, CMS, search, and so on to an existing project, or cover a library that is not in the catalog | Proposes an option that fits your stack, checks the current docs, plans, implements after approval, and records it in `docs/stack-profile.md` and an ADR. For something new, drafts a capability profile instead |
 | `/rafi:plan-feature <name>` | Plan a feature | Reads your PRD and code, then proposes slices, files, tests, and risks. Writes no code until you approve |
 | `/rafi:slice <name>` | Build one small piece | Implements only that piece, writes tests, runs checks, runs the reviewer and the matching audits, reports briefly, and suggests a commit message. Never commits |
 | `/rafi:fix-issue <description>` | Fix a bug | Writes a failing test first, finds the root cause, makes the smallest fix, and runs the checks |
@@ -140,12 +142,22 @@ Two habits:
 
 ## 5. Stacks: how to handle any technology
 
-Projects use different technologies, so the plugin does not hard-code any. A **stack profile** is a short file that tells Claude and the audits the rules for one technology. Profiles come in two kinds, and every project combines one of each:
+Projects use different technologies, so the plugin does not hard-code any. A **stack profile** is a short file that tells Claude and the audits the rules for one technology. Profiles come in three kinds. Every project combines one framework, zero or one database, and any number of capabilities:
 
 | Kind | Folder | Covers | Examples now |
 |---|---|---|---|
 | **Framework** | `plugins/rafi/stacks/frameworks/` | Folders, layering, tooling, SEO, accessibility, speed | `nextjs`, `astro`, `react-spa`, `react-express`, `wordpress` |
 | **Database** | `plugins/rafi/stacks/databases/` | Client, migrations, queries, tests, security, speed | `mongodb`, `postgres` |
+| **Capability** | `plugins/rafi/stacks/capabilities/` | One cross-cutting concern with 2–5 curated options | `styling`, `icons`, `cms`, `search` |
+
+### Capabilities
+A capability file covers one concern, such as icons, and lists a few vetted options in a table:
+- **Status** per option, in the style of a tech radar: `adopt` (safe default), `trial` (good when its "pick when" fits), `hold` (never proposed; kept to explain why).
+- **Works with**: which framework and database profiles the option fits, so bootstrap never proposes a combination that does not work.
+- **Default** per framework, so you usually just confirm.
+- One `## Option:` section per option with setup, conventions, and the extra checks the audits apply.
+
+Bootstrap and brainstorm read only the short summary at the top of each file. Only the options you choose are copied into your project's `docs/stack-profile.md`, and the audits check them from there. Before scaffolding, bootstrap checks each chosen option against its current official docs, so a stale note in the catalog does not reach your project.
 
 Because they are separate, combinations cost nothing:
 
@@ -159,9 +171,9 @@ Because they are separate, combinations cost nothing:
 | Client or content site on WordPress | `wordpress` | none (WordPress has its own MySQL) |
 
 ### How a profile is used
-1. `/rafi:bootstrap-project` asks for a framework and a database, reads both files, and proposes one merged scaffold plan.
-2. It combines both into **`docs/stack-profile.md`** in your project: a title, then the framework file, then the database file.
-3. Every audit reads `docs/stack-profile.md` and applies its checks on top of the general standard. So the Next.js profile adds "server actions must check ownership" and the Postgres profile adds "index every foreign key".
+1. `/rafi:bootstrap-project` asks for a framework and a database, then proposes capabilities in one table, and after your confirmation proposes one merged scaffold plan.
+2. It combines everything into **`docs/stack-profile.md`** in your project: a title, a Stack table (concern → choice), the framework file, the database file, then the chosen option section of each capability.
+3. Every audit reads `docs/stack-profile.md` and applies its checks on top of the general standard. So the Next.js profile adds "server actions must check ownership", the Postgres profile adds "index every foreign key", and the Pagefind option adds "never index private pages".
 
 ### A technology that is not in the list
 Run:
@@ -172,15 +184,17 @@ Claude asks what you need (kind, language, versions, tools, hosting), reads the 
 - **Use it now:** run `/rafi:bootstrap-project` and give the draft path when it asks for a framework or database.
 - **Keep it for every project:** copy the file into your local clone of this repo at `plugins/rafi/stacks/frameworks/` or `.../databases/`, raise the version (section 7), and push.
 
+### A library or concern that is not in the catalog
+Run `/rafi:add-capability payments` (or `icons phosphor`, and so on). If the concern or option is missing, it researches the official docs and drafts it in the capability format to `docs/stack-drafts/capability-<concern>.md`. Use it in the project right away, or copy it into `plugins/rafi/stacks/capabilities/` to keep it for every project.
+
 ### A stack that is not Node and pnpm
 The project template assumes Node and pnpm. For Python, Go, or anything else, the profile's **Adaptation notes** section lists what to change:
 - create `.claude/typecheck-cmd` and `.claude/format-cmd` (section 3.4)
-- rewrite `.github/workflows/*.yml` for that language
 - replace the `pnpm` entries in the `.claude/settings.json` allow list
 - replace or drop `.husky/` and `.lintstagedrc.json`
 
 ### Writing or editing a profile by hand
-Copy `plugins/rafi/stacks/_template.md` and fill each section. Rules must be specific and checkable ("every server action checks ownership"), never vague ("be secure"). Point each security check at the section number of the standard it belongs to. Verify version-specific claims in the official docs and list the sources.
+Copy `plugins/rafi/stacks/_template.md` (framework or database) or `plugins/rafi/stacks/_capability-template.md` (capability) and fill each section. Rules must be specific and checkable ("every server action checks ownership"), never vague ("be secure"). Point each security check at the section number of the standard it belongs to. Verify version-specific claims in the official docs and list the sources.
 
 ## 6. The audit standards
 
@@ -216,6 +230,7 @@ cd claude-plugins
 | An audit standard | The section file in `plugins/rafi/skills/<audit>/references/` |
 | How a command or audit behaves | `plugins/rafi/skills/<name>/SKILL.md` |
 | A stack profile | `plugins/rafi/stacks/frameworks/<name>.md` or `.../databases/<name>.md` |
+| A capability or one of its options | `plugins/rafi/stacks/capabilities/<concern>.md` |
 | A hook | `plugins/rafi/scripts/*.sh` or `plugins/rafi/hooks/hooks.json` |
 | An agent | `plugins/rafi/agents/<name>.md` |
 
@@ -274,23 +289,27 @@ claude-plugins/
         ├── .claude-plugin/
         │   └── plugin.json       the plugin's name and version
         ├── skills/               commands and audits, one folder each with a SKILL.md
-        │   ├── bootstrap-project/  plan-feature/  slice/  fix-issue/
-        │   ├── release-check/  retro/  add-stack/
+        │   ├── brainstorm/  bootstrap-project/  plan-feature/  slice/  fix-issue/
+        │   ├── release-check/  retro/  add-stack/  add-capability/
         │   └── security-audit/  seo-audit/  performance-audit/
         │       accessibility-audit/  code-review/   (each has references/)
         ├── agents/               code-reviewer, security-auditor, test-writer
         ├── hooks/hooks.json      when the hooks run
         ├── scripts/              format-file.sh, verify-on-stop.sh
         └── stacks/
-            ├── _template.md      blank profile
+            ├── _template.md             blank framework or database profile
+            ├── _capability-template.md  blank capability
             ├── frameworks/       nextjs.md, astro.md, react-spa.md, react-express.md, wordpress.md
-            └── databases/        mongodb.md, postgres.md
+            ├── databases/        mongodb.md, postgres.md
+            └── capabilities/     styling.md, icons.md, cms.md, search.md
 ```
 
 ## 9. Design decisions
 
 - **A generic core with a swappable stack layer.** The standards are framework-agnostic. Anything about a specific technology lives only in `stacks/`.
 - **Frameworks and databases are separate profiles**, so a new database never means rewriting a framework profile.
+- **Cross-cutting libraries are capabilities, not part of a framework.** Styling, icons, CMS, and search are chosen per project from a curated catalog with status, compatibility, and a default, like a paved road plus a tech radar. The catalog grows through `/rafi:add-capability`, not by listing every package up front.
+- **Brainstorm is our own, not Superpowers'.** It reads this catalog and writes a file that bootstrap consumes, and it is manual-only like the other workflow commands.
 - **Standards are split by section**, so an audit does not load hundreds of lines it does not need.
 - **Audits only report.** They never edit code. Changes happen in a slice or a fix, where tests and review wrap them.
 - **Findings logs are per project**, never in this repo.
@@ -310,7 +329,7 @@ claude-plugins/
 | The Stop hook blocks Claude repeatedly | Fix the type error it reports. Or make `.claude/typecheck-cmd` point at a command that passes |
 | Hooks print `jq: command not found` | Install `jq` (`sudo dnf install jq`) |
 | The formatter does nothing | The project has no Prettier and no `.claude/format-cmd`. Add one of them |
-| `/rafi:bootstrap-project` does not list a stack you added | The file must be in `stacks/frameworks/` or `stacks/databases/`, and the plugin version must be raised and updated |
+| `/rafi:bootstrap-project` does not list a stack or capability you added | The file must be in `stacks/frameworks/`, `stacks/databases/`, or `stacks/capabilities/`, and the plugin version must be raised and updated |
 
 ## 11. FAQ
 

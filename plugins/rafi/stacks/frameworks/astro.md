@@ -3,7 +3,7 @@ Kind: framework. Use for content-driven sites where SEO and speed matter most: b
 Verified against: Astro 7.x (Vite 8, Rust compiler), September 2026. Read in full: the Astro v7 upgrade guide, https://docs.astro.build/en/guides/upgrade-to/v7/. The rest follows the Astro docs guides named below. Re-verify version-specific behavior before large changes.
 
 ## Stack
-Astro 7, TypeScript strict, Tailwind CSS (through its Vite plugin, per Astro's styling guide), Vitest, Playwright, pnpm. Static output by default. Interactive islands use one UI framework only when needed (React is the default choice). Default hosting: a static host (Railway, Netlify, Cloudflare Pages, or Vercel). On-demand rendering needs an adapter for the chosen host.
+Astro 7, TypeScript strict, Vitest, Playwright, pnpm. Styling, icons, CMS, search, and other cross-cutting concerns come from the chosen capabilities (`stacks/capabilities/`). Static output by default. Interactive islands use one UI framework only when needed (React is the default choice). Default hosting: a static host (Railway, Netlify, Cloudflare Pages, or Vercel). On-demand rendering needs an adapter for the chosen host.
 Node: use a current LTS that the installed Astro version supports, and pin it in `.nvmrc`.
 
 ## Scaffold contract
@@ -13,7 +13,7 @@ Node: use a current LTS that the installed Astro version supports, and pin it in
 - Scripts: `dev` (`astro dev`), `build` (`astro build`), `preview` (`astro preview`), `typecheck` (`astro check`, which needs `@astrojs/check` and `typescript`), `lint` (ESLint with `eslint-plugin-astro`), `test` (Vitest configured with `getViteConfig` from `astro/config`), `check` (typecheck + lint + test), `test:e2e` (`playwright test`), `lighthouse` (`lhci autorun`).
 - Also: `packageManager`, `.nvmrc`, Prettier with `prettier-plugin-astro`, `.env.example`, one passing test, `@astrojs/sitemap`, and `site` set in `astro.config.mjs`.
 - Overrides to the standard bootstrap list: no health endpoint for static output. Environment variables are declared in the `astro:env` schema instead of a hand-written Zod env module.
-- E2E and Lighthouse dev dependencies: `@playwright/test`, `@axe-core/playwright`, `@lhci/cli`. Reuse the `e2e/a11y.spec.ts` pattern from the Next.js profile with this site's real routes. The E2E and Lighthouse workflows build first, then serve with `pnpm preview`.
+- E2E and Lighthouse dev dependencies: `@playwright/test`, `@axe-core/playwright`, `@lhci/cli`. Reuse the `e2e/a11y.spec.ts` pattern from the Next.js profile with this site's real routes. E2E and Lighthouse run against a build served with `pnpm preview`, so run `pnpm build` first.
 
 ### `playwright.config.ts`
 ```ts

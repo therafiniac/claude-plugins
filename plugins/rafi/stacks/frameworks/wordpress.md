@@ -126,8 +126,8 @@ Start at level 5 and raise it as the code allows.
 ## Adaptation notes (differences from the Node and pnpm template)
 - `.claude/format-cmd`: first line `vendor/bin/phpcbf -q`. The formatter hook then runs it on each edited file. JavaScript files are still formatted by lint-staged at commit time.
 - The Stop hook keeps using `pnpm -s typecheck`, which runs PHPStan through Composer. No `.claude/typecheck-cmd` is needed.
-- `.github/workflows/ci.yml`: before the pnpm steps add `shivammathur/setup-php` (PHP 8.3) and `composer install`. Docker is preinstalled on GitHub's Ubuntu runners, so wp-env works there.
-- `.github/workflows/e2e.yml` and `lighthouse.yml`: run `pnpm dev` (wp-env start) before the tests and set the base URL to `http://localhost:8888`.
+- Local checks need PHP 8.3 and Composer installed (`composer install` before `pnpm check`).
+- E2E and Lighthouse: run `pnpm dev` (wp-env start) before the tests and set the base URL to `http://localhost:8888`.
 - `.gitignore`: add `wp-config.php`, `wp-content/uploads/`, and `vendor/`.
 - `.lintstagedrc.json`: add `"*.php": "vendor/bin/phpcbf -q"`.
 - Deployment: upload only the custom theme and plugin (SFTP, rsync, or the host's Git deploy from a GitHub Action). Never deploy `wp-config.php`, uploads, or core.

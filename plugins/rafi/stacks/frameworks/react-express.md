@@ -2,7 +2,7 @@
 Kind: framework. Use for dashboards, admin tools, and apps behind login. For public, SEO-relevant content use the Next.js profile: an SPA serves crawlers an empty shell unless pre-rendered. Pair it with a database profile. With the MongoDB profile this is the classic MERN stack.
 
 ## Stack
-pnpm workspaces monorepo: `apps/web` (React + Vite + TypeScript), `apps/api` (Express + TypeScript), `packages/shared` (Zod schemas and types used by both). Vitest, Playwright, Tailwind. Default hosting: Railway.
+pnpm workspaces monorepo: `apps/web` (React + Vite + TypeScript), `apps/api` (Express + TypeScript), `packages/shared` (Zod schemas and types used by both). Vitest, Playwright. Default hosting: Railway. Styling, icons, search, and other cross-cutting concerns come from the chosen capabilities (`stacks/capabilities/`).
 
 ## Scaffold contract
 - API layering: route → controller → service → repository. Only repositories touch the database.

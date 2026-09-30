@@ -3,7 +3,7 @@ Kind: framework. Use for public or SEO-relevant sites: blogs, marketing and cont
 Next.js behavior changes between major versions. Verify version-specific claims in the installed version's docs.
 
 ## Stack
-Next.js (App Router), TypeScript strict, Zod, Tailwind, Vitest, Playwright, pnpm. Default hosting: Railway.
+Next.js (App Router), TypeScript strict, Zod, Vitest, Playwright, pnpm. Default hosting: Railway. Styling, icons, CMS, search, and other cross-cutting concerns come from the chosen capabilities (`stacks/capabilities/`).
 
 ## Scaffold contract
 - Folders: `src/app` (routes only, thin), `src/features/<name>/{actions,service,repo,schema,tests}`, `src/lib` (database client, auth, utils), `src/config/env.ts` (Zod-validated env, used instead of `process.env`).
@@ -98,7 +98,7 @@ for (const path of ['/']) {
 - Heavy client-only dependencies (rich-text editor, charts) load via `next/dynamic` and never on public pages.
 - Measure the bundle with `@next/bundle-analyzer`.
 - Stream slow below-the-fold data with `Suspense`.
-- Lighthouse runs in CI against a production build. Never measure with `next dev`.
+- Run Lighthouse against a production build (`pnpm build`, then `pnpm lighthouse`). Never measure with `next dev`.
 
 ## Accessibility checks (added to accessibility-audit)
 - Use `next/link` and real `<a>` and `<button>` elements. No clickable `div`s.

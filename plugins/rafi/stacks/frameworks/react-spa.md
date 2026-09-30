@@ -3,7 +3,7 @@ Kind: framework. Use for a React single-page app that talks to an API that alrea
 Verified against: Vite 8 (Rolldown), announced at https://vite.dev/blog/announcing-vite8, and create-vite 9.x, September 2026. Vite 8 needs Node 20.19+ or 22.12+. The rest follows the React, Vite, and library docs. Re-verify version-specific behavior before large changes.
 
 ## Stack
-React with TypeScript strict, Vite, React Router, TanStack Query, Zod, Tailwind CSS, Vitest with React Testing Library, MSW, Playwright, pnpm. Default hosting: any static host (Railway, Netlify, Cloudflare Pages, or Vercel) with a fallback that serves `index.html` for every route.
+React with TypeScript strict, Vite, React Router, TanStack Query, Zod, Vitest with React Testing Library, MSW, Playwright, pnpm. Styling, icons, and other cross-cutting concerns come from the chosen capabilities (`stacks/capabilities/`). Default hosting: any static host (Railway, Netlify, Cloudflare Pages, or Vercel) with a fallback that serves `index.html` for every route.
 
 ## Scaffold contract
 - Create with `pnpm create vite my-app --template react-ts` (or `react-compiler-ts`), then add the libraries above.

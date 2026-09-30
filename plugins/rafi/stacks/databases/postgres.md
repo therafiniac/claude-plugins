@@ -8,24 +8,12 @@ PostgreSQL with a typed query layer: Drizzle or Prisma. Choose in bootstrap and 
 - Env: `DATABASE_URL` in `.env.example` and in the validated env module.
 - One database module (client and pool). In serverless, use the provider's pooler or a very small pool.
 - Scripts: `db:generate` (create a migration), `db:migrate` (apply), `db:seed` (idempotent seed). Map them to the chosen tool's commands.
-- Tests run against a real Postgres, never mocks: a service container in CI and a local container (Docker or Podman) for development. Reset state between tests with rolled-back transactions or table truncation.
-- CI: add a Postgres service container to the jobs in `.github/workflows/ci.yml` and `e2e.yml` that run tests, and set `DATABASE_URL`. Match the image version to production:
-```yaml
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-    env:
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
+- Tests run against a real Postgres, never mocks: a local container (Podman or Docker) whose major version matches production. Reset state between tests with rolled-back transactions or table truncation.
+- Test database, started once before running tests locally:
+```bash
+podman run -d --name <project>-pg-test -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=test -p 5432:5432 postgres:17
 ```
+  Tests use `DATABASE_URL=postgres://postgres:postgres@localhost:5432/test`.
 
 ## Conventions
 - Schema changes happen only through migrations. Never edit an applied migration; add a new one.

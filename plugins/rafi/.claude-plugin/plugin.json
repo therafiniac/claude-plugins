@@ -1,7 +1,7 @@
 {
   "name": "rafi",
-  "version": "1.2.1",
-  "description": "Personal full-stack workflow: audits, review, slice workflow, agents, hooks, stack profiles.",
+  "version": "1.3.0",
+  "description": "Personal full-stack workflow: brainstorm, audits, review, slice workflow, agents, hooks, stack profiles, capabilities catalog.",
   "author": {
     "name": "Rafi"
   },

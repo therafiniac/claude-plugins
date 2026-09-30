@@ -7,10 +7,10 @@ Astro 7, TypeScript strict, Vitest, Playwright, pnpm. Styling, icons, CMS, searc
 Node: use a current LTS that the installed Astro version supports, and pin it in `.nvmrc`.
 
 ## Scaffold contract
-- Create with `pnpm create astro@latest` (minimal template, TypeScript strict), or scaffold by hand.
+- Create with `pnpm create astro@latest` (minimal template, TypeScript strict), or scaffold by hand. The generator also writes its own `CLAUDE.md` and `AGENTS.md` (dev-server and docs-link notes); they must not replace the template's `CLAUDE.md`.
 - Folders: `src/pages` (routes only), `src/layouts` (page shell with head, SEO, skip link), `src/components`, `src/content` (Markdown, MDX, or data), `src/content.config.ts` (collection definitions), `src/lib`, `public/` (static files such as `robots.txt`).
 - Collections use the Content Layer API: a loader plus a Zod schema (Zod comes from `astro/zod`). Astro 6 and later have no legacy collections.
-- Scripts: `dev` (`astro dev`), `build` (`astro build`), `preview` (`astro preview`), `typecheck` (`astro check`, which needs `@astrojs/check` and `typescript`), `lint` (ESLint with `eslint-plugin-astro`), `test` (Vitest configured with `getViteConfig` from `astro/config`), `check` (typecheck + lint + test), `test:e2e` (`playwright test`), `lighthouse` (`lhci autorun`).
+- Scripts: `dev` (`astro dev`), `build` (`astro build`), `preview` (`astro preview`), `typecheck` (`astro check`, which needs `@astrojs/check` and `typescript@^6`: as of September 2026 `astro check` refuses TypeScript 7, and TypeScript 7 support is only experimental through `@astrojs/ts-content-mapper`), `lint` (ESLint with `eslint-plugin-astro`), `test` (Vitest configured with `getViteConfig` from `astro/config`), `check` (typecheck + lint + test), `test:e2e` (`playwright test`), `lighthouse` (`lhci autorun`).
 - Also: `packageManager`, `.nvmrc`, Prettier with `prettier-plugin-astro`, `.env.example`, one passing test, `@astrojs/sitemap`, and `site` set in `astro.config.mjs`.
 - Overrides to the standard bootstrap list: no health endpoint for static output. Environment variables are declared in the `astro:env` schema instead of a hand-written Zod env module.
 - E2E and Lighthouse dev dependencies: `@playwright/test`, `@axe-core/playwright`, `@lhci/cli`. Reuse the `e2e/a11y.spec.ts` pattern from the Next.js profile with this site's real routes. E2E and Lighthouse run against a build served with `pnpm preview`, so run `pnpm build` first.

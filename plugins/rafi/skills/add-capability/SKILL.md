@@ -15,9 +15,9 @@ Pick the mode:
 ## Add
 1. Read `docs/stack-profile.md` (framework, database, capabilities already chosen) and the concern's summary. If the concern is already in the Stack table, say so and ask whether I want to replace the current option.
 2. Propose the option: my named option, or the "Default" for this framework, filtered by "Works with". List the other fitting `adopt` and `trial` options as alternatives. Never propose `hold`. Wait for my choice.
-3. Read only the chosen `## Option:` section. Check its install steps and version constraints against the current official docs (web search and fetch). Propose a plan: dependencies with a reason each, files, config, and scripts. **Stop and wait for my approval.**
+3. Read only the chosen `## Option:` section and the file's `## Shared` section if it has one. Check its install steps and version constraints against the current official docs (web search and fetch). Propose a plan: dependencies with a reason each, files, config, and scripts. **Stop and wait for my approval.**
 4. Implement it, following the option's conventions. Run `pnpm check` and `pnpm build`. Fix failures.
-5. Update `docs/stack-profile.md`: add or replace the row in the Stack table, and append `# Capability: <concern> (<option>)` followed by the option's section. Write `docs/adr/NNN-<concern>.md` (next free number) with the choice and the alternatives considered.
+5. Update `docs/stack-profile.md`: add or replace the row in the Stack table, and append `# Capability: <concern> (<option>)` followed by the option's section and the file's `## Shared` section if it has one. Write `docs/adr/NNN-<concern>.md` (next free number) with the choice and the alternatives considered.
 6. Report in five lines or fewer. End with the commit message only, `type(scope): subject`, no explanation around it. Do not commit.
 
 ## Draft

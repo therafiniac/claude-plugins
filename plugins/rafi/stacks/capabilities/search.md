@@ -9,7 +9,7 @@ Verified: September 2026 (Pagefind 1.5). Re-verify the chosen option in its offi
 |---|---|---|---|---|
 | pagefind | adopt | Static or mostly static content site. Index built from the HTML at build time, no server | astro, any static output | free |
 | postgres-fts | adopt | App already on Postgres; search over its own tables | postgres | free |
-| meilisearch | trial | Large or fast-changing dataset, typo tolerance, facets, instant results | any server-side framework | free self-hosted; cloud plan |
+| meilisearch | trial | Large or fast-changing dataset, typo tolerance, facets, instant results | nextjs, react-express, astro (on-demand routes) | free self-hosted; cloud plan |
 | algolia | trial | Hosted search with minimal ops, or DocSearch for public documentation | any | paid beyond the free tier; DocSearch free for eligible docs |
 
 ## Option: pagefind
@@ -43,7 +43,7 @@ Conventions:
 Security checks (added to security-audit):
 - The search input is passed as a parameter, never concatenated into SQL (§4).
 - The search endpoint is rate limited (§13).
-- Results apply the same authorization filter as the list pages (§3).
+- Results are filtered by the caller's permissions, exactly like the list pages (§3).
 Performance checks (added to performance-audit):
 - `EXPLAIN` shows the GIN index is used on the search query.
 Sources: https://www.postgresql.org/docs/current/textsearch.html

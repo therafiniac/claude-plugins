@@ -148,14 +148,14 @@ Projects use different technologies, so the plugin does not hard-code any. A **s
 |---|---|---|---|
 | **Framework** | `plugins/rafi/stacks/frameworks/` | Folders, layering, tooling, SEO, accessibility, speed | `nextjs`, `astro`, `react-spa`, `react-express`, `wordpress` |
 | **Database** | `plugins/rafi/stacks/databases/` | Client, migrations, queries, tests, security, speed | `mongodb`, `postgres` |
-| **Capability** | `plugins/rafi/stacks/capabilities/` | One cross-cutting concern with 2–5 curated options | `styling`, `icons`, `cms`, `search` |
+| **Capability** | `plugins/rafi/stacks/capabilities/` | One cross-cutting concern with 2–5 curated options | `styling`, `ui-components`, `icons`, `fonts`, `cms`, `search`, `forms`, `auth`, `email`, `analytics`, `payments` |
 
 ### Capabilities
 A capability file covers one concern, such as icons, and lists a few vetted options in a table:
 - **Status** per option, in the style of a tech radar: `adopt` (safe default), `trial` (good when its "pick when" fits), `hold` (never proposed; kept to explain why).
 - **Works with**: which framework and database profiles the option fits, so bootstrap never proposes a combination that does not work.
 - **Default** per framework, so you usually just confirm.
-- One `## Option:` section per option with setup, conventions, and the extra checks the audits apply.
+- One `## Option:` section per option with setup, conventions, and the extra checks the audits apply, plus an optional `## Shared` section for rules that apply whichever option you pick. An option never refers to another option, because only the chosen one is copied into your project.
 
 Bootstrap and brainstorm read only the short summary at the top of each file. Only the options you choose are copied into your project's `docs/stack-profile.md`, and the audits check them from there. Before scaffolding, bootstrap checks each chosen option against its current official docs, so a stale note in the catalog does not reach your project.
 
@@ -301,7 +301,8 @@ claude-plugins/
             ├── _capability-template.md  blank capability
             ├── frameworks/       nextjs.md, astro.md, react-spa.md, react-express.md, wordpress.md
             ├── databases/        mongodb.md, postgres.md
-            └── capabilities/     styling.md, icons.md, cms.md, search.md
+            └── capabilities/     styling, ui-components, icons, fonts, cms, search,
+                                  forms, auth, email, analytics, payments (.md)
 ```
 
 ## 9. Design decisions

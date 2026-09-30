@@ -9,7 +9,8 @@ Notes for whoever fills this in:
 - Status: `adopt` (safe default), `trial` (good when its "Pick when" fits; verify more carefully), `hold` (do not start new projects with it; keep only to explain why).
 - "Works with" uses profile names from `stacks/frameworks/` and `stacks/databases/`, or `any`.
 - Everything above the first `## Option:` heading is the summary that bootstrap and brainstorm read. Keep it short.
-- Each option section is copied into the project's `docs/stack-profile.md` when chosen, so it must stand alone.
+- Each option section is copied into the project's `docs/stack-profile.md` when chosen, together with the file's `## Shared` section if there is one. So an option must never say "same as <other option>". Put rules common to all options in `## Shared`, after the last option.
+- "Works with" holds only profile names, `any`, and short qualifiers such as "(on-demand routes)" or "(React islands)". Package names go in Setup.
 - Every rule must be specific and checkable. Point audit checks at the standard's section number.
 
 ## Options
@@ -30,3 +31,6 @@ Accessibility checks (added to accessibility-audit):
 SEO checks (added to seo-audit, if relevant):
 - <check>
 Sources: <official documentation URLs>
+
+## Shared
+<Optional. Conventions and audit checks that apply whichever option is chosen. Copied into the project with the chosen option.>

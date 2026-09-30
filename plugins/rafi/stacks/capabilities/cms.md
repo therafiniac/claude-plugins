@@ -8,9 +8,9 @@ Verified: September 2026. Re-verify the chosen option in its official docs befor
 | Option | Status | Pick when | Works with | Cost |
 |---|---|---|---|---|
 | none | adopt | You edit Markdown in the repo yourself (Astro content collections, MDX) | any | free |
-| keystatic | adopt | Git-based web editor for Markdown, YAML, or JSON in the repo. Local mode needs no account | astro (needs an adapter for its admin routes), nextjs | free; Keystatic Cloud optional |
+| keystatic | adopt | Git-based web editor for Markdown, YAML, or JSON in the repo. Local mode needs no account. Astro needs an adapter for its admin routes | astro (on-demand routes), nextjs | free; Keystatic Cloud optional |
 | decap | trial | Git-based editor on a purely static site with no server routes at all | astro, react-spa, any static output | free |
-| sanity | adopt | Structured content, several editors, drafts and previews, content reused across sites or apps | nextjs (`next-sanity`), astro (`@sanity/astro`) | hosted; free plan, check current limits |
+| sanity | adopt | Structured content, several editors, drafts and previews, content reused across sites or apps | nextjs, astro | hosted; free plan, check current limits |
 | payload | trial | App and CMS in one Next.js codebase, self-hosted, content in your own database | nextjs + postgres or mongodb | free, self-hosted |
 
 ## Option: none

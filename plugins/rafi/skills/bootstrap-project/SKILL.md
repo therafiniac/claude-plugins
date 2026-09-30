@@ -13,7 +13,7 @@ Idea: $ARGUMENTS
    - hosting (default Railway), auth needed, database name, non-goals
    If neither list fits what I want, tell me to run `/rafi:add-stack <name>` first, and stop.
 2. Read the chosen framework and database files. Propose the scaffold plan as one merged plan: folders, dependencies with a reason each, scripts, and CI changes (for example a database service container). **Stop and wait for my approval.**
-3. After approval, scaffold in the current directory, not a subfolder. Follow both profiles' scaffold contracts. Required in every project:
+3. After approval, scaffold in the current directory, not a subfolder. Follow both profiles' scaffold contracts. Required in every project, unless the chosen profile's scaffold contract explicitly overrides an item:
    - scripts `dev`, `build`, `typecheck`, `lint`, `test`, `check` (check = typecheck + lint + test), a `packageManager` field, `.nvmrc`
    - Prettier, ESLint, Vitest, a validated env module, `.env.example`, a health endpoint, one passing test
    - enforcement: dev dependencies `husky`, `lint-staged`, `@commitlint/cli`, `@commitlint/config-conventional`, and a `"prepare": "husky"` script. The config files (`.husky/`, `commitlint.config.cjs`, `.lintstagedrc.json`) already exist in the repo. Do not overwrite them.

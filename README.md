@@ -144,7 +144,7 @@ Projects use different technologies, so the plugin does not hard-code any. A **s
 
 | Kind | Folder | Covers | Examples now |
 |---|---|---|---|
-| **Framework** | `plugins/rafi/stacks/frameworks/` | Folders, layering, tooling, SEO, accessibility, speed | `nextjs`, `react-express` |
+| **Framework** | `plugins/rafi/stacks/frameworks/` | Folders, layering, tooling, SEO, accessibility, speed | `nextjs`, `astro`, `react-spa`, `react-express`, `wordpress` |
 | **Database** | `plugins/rafi/stacks/databases/` | Client, migrations, queries, tests, security, speed | `mongodb`, `postgres` |
 
 Because they are separate, combinations cost nothing:
@@ -154,6 +154,9 @@ Because they are separate, combinations cost nothing:
 | Blog with SEO | `nextjs` | `mongodb` or `postgres` |
 | Classic MERN app | `react-express` | `mongodb` |
 | Dashboard with SQL | `react-express` | `postgres` |
+| Blog, docs, or marketing site | `astro` | none |
+| React frontend for an existing API | `react-spa` | none |
+| Client or content site on WordPress | `wordpress` | none (WordPress has its own MySQL) |
 
 ### How a profile is used
 1. `/rafi:bootstrap-project` asks for a framework and a database, reads both files, and proposes one merged scaffold plan.
@@ -280,7 +283,7 @@ claude-plugins/
         ├── scripts/              format-file.sh, verify-on-stop.sh
         └── stacks/
             ├── _template.md      blank profile
-            ├── frameworks/       nextjs.md, react-express.md
+            ├── frameworks/       nextjs.md, astro.md, react-spa.md, react-express.md, wordpress.md
             └── databases/        mongodb.md, postgres.md
 ```
 

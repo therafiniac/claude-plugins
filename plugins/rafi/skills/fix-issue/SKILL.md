@@ -11,4 +11,4 @@ Issue: $ARGUMENTS
 3. Make the minimal fix. No unrelated refactors.
 4. `pnpm check` must pass.
 5. If the root cause is a security or data-integrity issue, run the `rafi:security-auditor` subagent on the affected path.
-6. Report: root cause, fix, test added. Propose a `fix:` Conventional Commit message. Do not commit unless I say so.
+6. Report: root cause, fix, test added. End with the commit message only, `fix(scope): subject`, no explanation around it. Do not commit unless I say so.

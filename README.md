@@ -79,8 +79,8 @@ claude plugin uninstall rafi@rafi-tools   # remove it
 ## 3. Command reference
 
 There are two kinds of commands:
-- **Workflow commands** (3.1–3.11) run the building process. They are **manual-only**: Claude never starts them on its own, and they cost nothing in Claude's memory until you type them.
-- **Audits and review** (3.12–3.13) check your work. You can type them, and the workflow commands call them for you when a change needs them.
+- **Workflow commands** (3.1–3.12) run the building process. They are **manual-only**: Claude never starts them on its own, and they cost nothing in Claude's memory until you type them.
+- **Audits and review** (3.13–3.14) check your work. You can type them, and the workflow commands call them for you when a change needs them.
 
 **Every command ends with a `Next:` line** suggesting the step that fits what just happened, for example `Next: /clear, then /rafi:slice tag pages` when the plan has slices left, or `Next: /rafi:fix-issue <finding>` after an audit finds a serious problem. It's only a suggestion: Claude never runs it, and you can ignore it. When one command calls another (a slice running an audit), only the outer command's `Next:` line counts.
 
@@ -248,7 +248,19 @@ Reviews the conversation and the audit logs for corrections, repeated instructio
 
 It applies only what you approve. It never edits the plugin itself.
 
-### 3.12 The four audits
+### 3.12 `/rafi:scope [agreed]`: scope of work for the client and for you
+
+| | |
+|---|---|
+| **Use it when** | You need a scope of work to show a client, a detailed breakdown to estimate the budget from, or a progress update. Run it at any stage: after brainstorm, mid-build, or before launch |
+| **It reads** | The brainstorm, stack profile, architecture, specs, discussions, decision records, the code, the tests, and `git log` |
+| **It asks you** | On the first run only: client and project name, what the client provides and by when, dates, revision rounds. It never invents a date or a requirement |
+| **It creates** | `docs/scope/client-scope.md`: short and in everyday words for the client (what they get, what's not included, what you need from them, key dates, paid services, progress). `docs/scope/work-scope.md`: every deliverable broken down in full (pages, flows, data, components, integrations, content, tests, audits, setup and launch work, client dependencies, assumptions, risks) so you can estimate the budget yourself |
+| **Progress** | Each deliverable is marked Done, In progress, or Not started in both files. Done means built and covered by a test; when unsure, it picks the lower status |
+| **Agreement** | `/rafi:scope agreed` marks both files as agreed and saves a baseline. After that, anything new appears under "Changes since agreement" so you can price it before building it |
+| **It never** | Writes code, edits other docs, or writes hours, rates, or prices. Both files are safe to keep in the repo |
+
+### 3.13 The four audits
 
 | Command | Checks against | Run it when you changed |
 |---|---|---|
@@ -259,7 +271,7 @@ It applies only what you approve. It never edits the plugin itself.
 
 **Scope:** `diff` (your branch compared with `main`, the default), `full` (everything), or a path or feature name such as `src/features/tags`. How they work is in section 6.
 
-### 3.13 `/rafi:code-review [scope]`
+### 3.14 `/rafi:code-review [scope]`
 
 Reviews changes against the production code standards (12 sections: thinking before coding, security, error handling, quality, validation, tests, performance, logging, configuration, frontend, git discipline, documentation). Findings are graded **Blocker / Major / Minor / Nit**, one line each with `file:line`, ending with **approve** or **changes needed**. Run it before any commit you make outside a slice.
 
@@ -295,6 +307,7 @@ Each option also has **works with** (which frameworks and databases it fits), so
 | **email** | resend (adopt), postmark (adopt), aws-ses (trial), smtp (trial) | resend |
 | **analytics** | umami (adopt), plausible (adopt), cloudflare-web-analytics (adopt), posthog (trial), google-analytics (hold) | content sites: umami. Apps with funnels: posthog |
 | **payments** | stripe (adopt), razorpay (adopt), paddle (trial), stripe-managed-payments (trial), lemon-squeezy (hold) | India: razorpay. Elsewhere: stripe |
+| **structured-data** | hand-written-jsonld (adopt), astro-seo-schema (trial), astrolib-seo (hold) | astro: hand-written-jsonld; academic sites add Google Scholar `citation_*` tags |
 
 Each concern's file explains *why* for every status (for example, Lucia is on hold because the library was deprecated in 2025). The files are in `plugins/rafi/stacks/capabilities/`.
 
@@ -565,6 +578,7 @@ claude-plugins/
         ├── skills/               one folder per command, each with a SKILL.md
         │   ├── brainstorm/  discuss/  bootstrap-project/  add-stack/  add-capability/
         │   ├── spec/  plan-feature/  slice/  fix-issue/  release-check/  retro/
+        │   ├── scope/
         │   └── security-audit/  seo-audit/  performance-audit/
         │       accessibility-audit/  code-review/     (each has references/)
         ├── agents/               code-reviewer, security-auditor, test-writer
@@ -576,7 +590,8 @@ claude-plugins/
             ├── frameworks/       astro, nextjs, react-spa, react-express, wordpress
             ├── databases/        mongodb, postgres
             └── capabilities/     styling, ui-components, icons, fonts, cms, search,
-                                  forms, auth, email, analytics, payments
+                                  forms, auth, email, analytics, payments,
+                                  structured-data
 ```
 
 ## 10. Design decisions

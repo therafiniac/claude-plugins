@@ -79,8 +79,10 @@ claude plugin uninstall rafi@rafi-tools   # remove it
 ## 3. Command reference
 
 There are two kinds of commands:
-- **Workflow commands** (3.1–3.10) run the building process. They are **manual-only**: Claude never starts them on its own, and they cost nothing in Claude's memory until you type them.
-- **Audits and review** (3.11–3.12) check your work. You can type them, and the workflow commands call them for you when a change needs them.
+- **Workflow commands** (3.1–3.11) run the building process. They are **manual-only**: Claude never starts them on its own, and they cost nothing in Claude's memory until you type them.
+- **Audits and review** (3.12–3.13) check your work. You can type them, and the workflow commands call them for you when a change needs them.
+
+**Every command ends with a `Next:` line** suggesting the step that fits what just happened, for example `Next: /clear, then /rafi:slice tag pages` when the plan has slices left, or `Next: /rafi:fix-issue <finding>` after an audit finds a serious problem. It's only a suggestion: Claude never runs it, and you can ignore it. When one command calls another (a slice running an audit), only the outer command's `Next:` line counts.
 
 > Example conversations below are **illustrations**. Real wording and choices will differ.
 
@@ -88,7 +90,7 @@ There are two kinds of commands:
 
 | | |
 |---|---|
-| **Use it when** | You have an idea but haven't decided how to build it or with what |
+| **Use it when** | You have an idea for a **new** project but haven't decided how to build it or with what. In a project that's already set up, it stops and points you to `/rafi:discuss` (3.5), so it never overwrites the project's original brainstorm |
 | **It asks you** | A few questions at a time: who it's for, the 3–5 core pages or flows, what's out of scope, who edits content and how technical they are, data (logins, payments, personal data), constraints (budget, hosting, deadline, traffic, languages), and what already exists |
 | **It proposes** | 2–3 approaches with effort, running cost, and what each makes easy or hard, plus a recommendation. Then a stack table from the catalog: framework, database, hosting, auth, and every relevant library concern, each with a proposed choice and alternatives |
 | **It creates** | `docs/brainstorm.md`: idea, users, core flows, non-goals, draft acceptance criteria, chosen and rejected approaches, the stack table, open questions |
@@ -152,7 +154,33 @@ you:    /rafi:add-capability payments paypal
 ```
 It asks which frameworks it must work with, hosted or self-hosted, and budget. It researches the official docs and drafts the entry in the catalog format (status, "works with", setup, checks). Once you approve, it's saved to `docs/stack-drafts/capability-<concern>.md`. Use it in this project right away, or copy it into this repo for every project (section 8).
 
-### 3.5 `/rafi:spec <feature>`: write a feature spec
+### 3.5 `/rafi:discuss <topic>`: talk through an idea in an existing project
+
+| | |
+|---|---|
+| **Use it when** | The project already exists and you have a new idea or want to change something: a new feature, a new library, switching a technology, or just thinking a problem through |
+| **It reads** | Your stack profile, architecture, specs, decision records, and earlier discussions, plus any code the topic touches |
+| **It asks you** | Up to four plain-language questions at a time: the problem and who it's for, what changes for the user, constraints, and how it relates to what exists |
+| **It proposes** | 2–3 approaches that fit your **current** stack, with effort, running cost, what changes, and risks. Then it checks the catalog for any new library the choice needs, and flags anything that would change an existing stack choice |
+| **It creates** | `docs/discussions/<date>-<topic>.md`: the problem, approaches, the choice (or "no decision"), new libraries, open questions. Earlier discussions are never overwritten |
+| **It never** | Writes code, installs anything, or edits existing docs |
+
+Its `Next:` line depends on the outcome: a new feature → `/rafi:spec`; a new library → `/rafi:add-capability`; something the catalog lacks → `/rafi:add-capability <concern> <library>` or `/rafi:add-stack`; a change to an existing choice → a decision record, then `/rafi:add-capability`; no decision → nothing, the notes are saved.
+
+```
+you:    /rafi:discuss online class booking
+claude: 1. Who books: existing students only, or anyone?  2. Do they pay when booking?
+        3. How many classes per week?  4. Any deadline?
+...
+claude: A) Embed a booking service (no logins to build)   B) Build booking with logins
+        Recommendation: A. New capability: none needed.
+        Saved: docs/discussions/2026-10-01-online-class-booking.md
+        Next: /rafi:spec class booking
+```
+
+**Brainstorm or discuss?** Brainstorm is for a new project and chooses the whole stack. Discuss works inside an existing project and its stack. Keeping them separate means changes to one can never break the other, or the bootstrap step that depends on brainstorm.
+
+### 3.6 `/rafi:spec <feature>`: write a feature spec
 
 | | |
 |---|---|
@@ -179,7 +207,7 @@ claude: Acceptance criteria:
 ```
 **Next step:** `/clear`, then `/rafi:plan-feature lesson tags`.
 
-### 3.6 `/rafi:plan-feature <name>`: plan a feature
+### 3.7 `/rafi:plan-feature <name>`: plan a feature
 
 | | |
 |---|---|
@@ -189,28 +217,28 @@ claude: Acceptance criteria:
 | **It proposes** | Slices in build order (each a thin vertical piece: data → logic → route → tests → UI), the files for each, data and API changes, test cases per slice, risks, and which audits each slice will trigger |
 | **It never** | Writes code or creates files |
 
-### 3.7 `/rafi:slice <name>`: build one piece
+### 3.8 `/rafi:slice <name>`: build one piece
 
 | | |
 |---|---|
 | **Use it when** | A plan is approved, and you want to build the next piece |
 | **It does** | 1. Restates the slice in three lines and builds only that. 2. Writes tests (the test-writer agent for large suites). 3. Runs `pnpm check` until it passes. 4. Has the code-reviewer agent review the change and fixes Blocker and Major findings. 5. Runs the audits that match the change and fixes Critical and High findings; the rest stay logged. 6. Adds a browser test for a new user-facing flow |
-| **It reports** | Five lines or fewer, ending with only a commit message such as `feat(tags): add tag pages` |
+| **It reports** | Five lines or fewer, then the commit message alone on its own line (such as `feat(tags): add tag pages`), then a `Next:` line: the next slice from the plan, or push and merge after the last one |
 | **It never** | Starts without an approved plan; commits |
 
-### 3.8 `/rafi:fix-issue <description>`: fix a bug
+### 3.9 `/rafi:fix-issue <description>`: fix a bug
 
 | | |
 |---|---|
 | **It does** | 1. Writes a test that fails because of the bug (if it can't reproduce the bug in a test, it explains why and stops). 2. States the root cause in one sentence. 3. Makes the smallest fix, with no unrelated changes. 4. Runs `pnpm check`. 5. Runs a security review if the cause is a security or data problem |
-| **It reports** | Root cause, fix, test added, ending with only a commit message such as `fix(tags): match tags case-insensitively` |
+| **It reports** | Root cause, fix, test added, then the commit message alone on its own line (such as `fix(tags): match tags case-insensitively`), then a `Next:` line |
 | **It never** | Patches symptoms instead of the cause; commits |
 
-### 3.9 `/rafi:release-check`: before launch
+### 3.10 `/rafi:release-check`: before launch
 
 Runs `pnpm check` and `pnpm build`, plus `pnpm test:e2e` and `pnpm lighthouse` if they exist, then the security, performance, and accessibility audits on the whole project (and SEO if the site has public pages). It reports Critical and High findings only and ends with a verdict, **ship** or **hold**, listing the blockers. It reminds you of the checks code can't do: search engine setup, real-user speed data, keyboard and screen-reader walkthrough, hosting settings, rollback plan.
 
-### 3.10 `/rafi:retro`: learn from a session
+### 3.11 `/rafi:retro`: learn from a session
 
 Reviews the conversation and the audit logs for corrections, repeated instructions, failed commands, recurring findings, and time-wasting surprises. It proposes at most seven items, each sorted into one of:
 - a project gotcha (goes in `CLAUDE.md`)
@@ -220,7 +248,7 @@ Reviews the conversation and the audit logs for corrections, repeated instructio
 
 It applies only what you approve. It never edits the plugin itself.
 
-### 3.11 The four audits
+### 3.12 The four audits
 
 | Command | Checks against | Run it when you changed |
 |---|---|---|
@@ -231,7 +259,7 @@ It applies only what you approve. It never edits the plugin itself.
 
 **Scope:** `diff` (your branch compared with `main`, the default), `full` (everything), or a path or feature name such as `src/features/tags`. How they work is in section 6.
 
-### 3.12 `/rafi:code-review [scope]`
+### 3.13 `/rafi:code-review [scope]`
 
 Reviews changes against the production code standards (12 sections: thinking before coding, security, error handling, quality, validation, tests, performance, logging, configuration, frontend, git discipline, documentation). Findings are graded **Blocker / Major / Minor / Nit**, one line each with `file:line`, ending with **approve** or **changes needed**. Run it before any commit you make outside a slice.
 
@@ -535,7 +563,7 @@ claude-plugins/
         ├── .claude-plugin/
         │   └── plugin.json       the plugin's name and version
         ├── skills/               one folder per command, each with a SKILL.md
-        │   ├── brainstorm/  bootstrap-project/  add-stack/  add-capability/
+        │   ├── brainstorm/  discuss/  bootstrap-project/  add-stack/  add-capability/
         │   ├── spec/  plan-feature/  slice/  fix-issue/  release-check/  retro/
         │   └── security-audit/  seo-audit/  performance-audit/
         │       accessibility-audit/  code-review/     (each has references/)
@@ -571,6 +599,8 @@ claude-plugins/
 - **Audits only report.** Changes happen in a slice or a fix, where tests and review surround them.
 - **Findings logs live in each project**, never in this repo.
 - **Claude never commits.** Commands end with a suggested commit message; git stays in your hands.
+- **Every command suggests, never chains.** Each ends with one `Next:` line chosen from the outcome, but never runs it, so you always decide the next step.
+- **Brainstorm and discuss are separate commands.** One job each: brainstorm feeds bootstrap for a new project, discuss works inside an existing one. Neither can break the other.
 - **The hooks default to Node and pnpm but read two optional files**, so other languages work without editing the plugin.
 - **Nothing needs GitHub settings**, secrets, Actions, or paid features.
 

@@ -18,4 +18,5 @@ Precondition: an approved plan exists in this conversation or in `docs/prd/`. If
    - new queries, lists, pages, heavy dependencies → `rafi:performance-audit` skill with `diff`
    - UI components, forms, layout, color → `rafi:accessibility-audit` skill with `diff`
 6. If the slice adds a user-facing flow, add or update a Playwright E2E test for it (`pnpm test:e2e`).
-7. Report in five lines or fewer: what changed, checks run, findings fixed and remaining. End with the commit message only, `type(scope): subject`, no explanation around it. Do not commit unless I say so.
+7. Report in five lines or fewer: what changed, checks run, findings fixed and remaining. Then the commit message alone on its own line, `type(scope): subject`, with no explanation around it. Do not commit unless I say so.
+8. Last line: `Next:` plus one step. If the approved plan has slices left: `/clear`, then `/rafi:slice <next slice name>`. If this was the last slice: run `pnpm check`, push the branch, and merge (and `/rafi:release-check` before a launch). If a Critical or High finding is still open: `/rafi:fix-issue <finding>`. It is only a suggestion. Never run it.

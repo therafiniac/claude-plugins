@@ -32,3 +32,4 @@ If `docs/stack-profile.md` exists, also apply its performance checks.
 ## Output
 1. Create or update `docs/audits/performance.md` with one row per Fail or Needs-measurement item: `Date | Section | Finding | Severity | Status`. Never delete rows. Mark resolved rows Fixed with the date.
 2. Reply with only Fail and Needs-measurement items, grouped by severity, one line each. Maximum 30 lines.
+3. Last line: `Next:` plus one step. A Critical or High finding: `/rafi:fix-issue <that finding>`. Only Needs-measurement items: do those checks by hand. Nothing found: continue what I was doing. If another command called this audit, that command gives the final next step instead. It is only a suggestion. Never run it.

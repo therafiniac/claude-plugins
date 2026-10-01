@@ -34,4 +34,4 @@ The spec describes **what** the feature does from the user's point of view, neve
 5. List the problems with a suggested rewrite for each. Edit the file only for the suggestions I accept.
 
 ## Finish
-Tell me the next step: `/clear`, then `/rafi:plan-feature <feature>`.
+Last line: `Next:` `/clear`, then `/rafi:plan-feature <feature>`. It is only a suggestion. Never run it.

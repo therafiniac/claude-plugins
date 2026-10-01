@@ -29,4 +29,5 @@ Read the project's `CLAUDE.md` and `.claude/rules/`. Then read only the referenc
 - Report only. Do not edit code.
 
 ## Output
-Findings grouped as Blocker / Major / Minor / Nit, one line each with `file:line`. End with one verdict line: approve or changes needed. No log file.
+Findings grouped as Blocker / Major / Minor / Nit, one line each with `file:line`. Then one verdict line: approve or changes needed. No log file.
+Last line: `Next:` on changes needed, fix the Blocker and Major findings and run `/rafi:code-review` again. On approve, commit. If another command called this review, that command gives the final next step instead. It is only a suggestion. Never run it.

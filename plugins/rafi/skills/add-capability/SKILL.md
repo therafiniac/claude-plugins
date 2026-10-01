@@ -18,7 +18,8 @@ Pick the mode:
 3. Read only the chosen `## Option:` section and the file's `## Shared` section if it has one. Check its install steps and version constraints against the current official docs (web search and fetch). Propose a plan: dependencies with a reason each, files, config, and scripts. **Stop and wait for my approval.**
 4. Implement it, following the option's conventions. Run `pnpm check` and `pnpm build`. Fix failures.
 5. Update `docs/stack-profile.md`: add or replace the row in the Stack table, and append `# Capability: <concern> (<option>)` followed by the option's section and the file's `## Shared` section if it has one. Write `docs/adr/NNN-<concern>.md` (next free number) with the choice and the alternatives considered.
-6. Report in five lines or fewer. End with the commit message only, `type(scope): subject`, no explanation around it. Do not commit.
+6. Report in five lines or fewer. Then the commit message alone on its own line, `type(scope): subject`, with no explanation around it. Do not commit.
+7. Last line: `Next:` commit, then continue what I was doing (for example `/rafi:spec <feature>` if this capability was added for a new feature). It is only a suggestion. Never run it.
 
 ## Draft
 1. Ask me in one message and wait for answers:
@@ -30,6 +31,6 @@ Pick the mode:
 3. Read `${CLAUDE_PLUGIN_ROOT}/stacks/_capability-template.md` and one existing capability file for structure, depth, and tone.
 4. Draft in the template's format: a full capability file for a new concern, or a new options-table row plus `## Option:` section for an existing concern. Give each option a status (`adopt`, `trial`, or `hold`) with a reason. Every rule must be specific and checkable. Audit checks point at section numbers.
 5. Show me the draft and wait for approval or edits. Save it to `docs/stack-drafts/capability-<concern>.md`.
-6. Tell me what to do next:
+6. End with `Next:` and these two options (only suggestions; never run them):
    - To use it in this project now, tell me and continue with the Add steps, reading the option from the draft.
    - To keep it for every project, copy it into my local clone of the plugin repo at `plugins/rafi/stacks/capabilities/` (merge into the existing file for an existing concern), raise the version in `plugin.json` and `marketplace.json`, and push.

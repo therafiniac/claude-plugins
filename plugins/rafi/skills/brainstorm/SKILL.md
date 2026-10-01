@@ -8,6 +8,8 @@ Idea: $ARGUMENTS
 
 Run this in the new project folder (a fresh copy of the template). Write no code, scaffold nothing, install nothing.
 
+0. If `docs/stack-profile.md` exists, the project is already bootstrapped. Do not continue and do not touch `docs/brainstorm.md`. Tell me to use `/rafi:discuss <topic>` for ideas in an existing project, and stop. If only `docs/brainstorm.md` exists, show its path and ask whether to replace it or stop.
+
 1. Understand the idea. Ask at most four questions per message and wait for answers. Cover, over as many rounds as needed:
    - who uses it, and the problem it solves for them
    - the 3 to 5 core flows or pages
@@ -29,4 +31,4 @@ Run this in the new project folder (a fresh copy of the template). Write no code
    - Chosen approach and why, rejected approaches and why
    - Stack table: `Concern | Choice | Alternatives considered`, including "not in catalog" rows
    - Open questions
-5. Tell me the next step: `/rafi:bootstrap-project <idea>`, which reads `docs/brainstorm.md`. If there are "not in catalog" rows, run `/rafi:add-stack` or `/rafi:add-capability` for them first.
+5. Last line: `Next:` `/rafi:bootstrap-project <idea>`, which reads `docs/brainstorm.md`. If there are "not in catalog" rows, the next step is `/rafi:add-stack` or `/rafi:add-capability` for them first. It is only a suggestion. Never run it.

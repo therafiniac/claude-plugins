@@ -41,3 +41,4 @@ Catalog: `${CLAUDE_PLUGIN_ROOT}/stacks/frameworks/`, `.../databases/`, `.../capa
    Then list these optional add-ons and install nothing:
    - Playwright MCP once UI exists: `claude mcp add playwright -- npx @playwright/mcp@latest`
    - frontend-design skill when building UI: find it under `/plugin` → Discover
+10. Last line: `Next:` read the changes and commit the scaffold yourself (for example `chore: scaffold project`), then `/rafi:spec <first feature from the PRD>`. It is only a suggestion. Never run it.

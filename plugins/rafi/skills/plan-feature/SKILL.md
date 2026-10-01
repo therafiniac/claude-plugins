@@ -13,4 +13,5 @@ Feature: $ARGUMENTS
    - Files per slice, data model changes, API contract.
    - Test cases per slice: happy path, invalid input, unauthorized, not-found, boundaries.
    - Risks, and which audits each slice triggers (see the Audit triggers table in CLAUDE.md).
-4. Stop and wait for my approval. Do not create files.
+4. Last line of the plan: `Next (after you approve):` `/clear`, then `/rafi:slice <first slice name>`. It is only a suggestion. Never run it.
+5. Stop and wait for my approval. Do not create files.

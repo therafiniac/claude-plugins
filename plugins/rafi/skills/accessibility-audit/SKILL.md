@@ -32,3 +32,4 @@ If `docs/stack-profile.md` exists, also apply its accessibility checks.
 ## Output
 1. Create or update `docs/audits/accessibility.md` with one row per Fail or Needs-verification item: `Date | Section | Finding | Severity | Status`. Never delete rows. Mark resolved rows Fixed with the date.
 2. Reply with only Fail and Needs-verification items, grouped by severity, one line each. Maximum 30 lines.
+3. Last line: `Next:` plus one step. A Critical or High finding: `/rafi:fix-issue <that finding>`. Only Needs-verification items: do those checks by hand. Nothing found: continue what I was doing. If another command called this audit, that command gives the final next step instead. It is only a suggestion. Never run it.

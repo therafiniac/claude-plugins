@@ -79,8 +79,8 @@ claude plugin uninstall rafi@rafi-tools   # remove it
 ## 3. Command reference
 
 There are two kinds of commands:
-- **Workflow commands** (3.1–3.9) run the building process. They are **manual-only**: Claude never starts them on its own, and they cost nothing in Claude's memory until you type them.
-- **Audits and review** (3.10–3.11) check your work. You can type them, and the workflow commands call them for you when a change needs them.
+- **Workflow commands** (3.1–3.10) run the building process. They are **manual-only**: Claude never starts them on its own, and they cost nothing in Claude's memory until you type them.
+- **Audits and review** (3.11–3.12) check your work. You can type them, and the workflow commands call them for you when a change needs them.
 
 > Example conversations below are **illustrations**. Real wording and choices will differ.
 
@@ -152,17 +152,44 @@ you:    /rafi:add-capability payments paypal
 ```
 It asks which frameworks it must work with, hosted or self-hosted, and budget. It researches the official docs and drafts the entry in the catalog format (status, "works with", setup, checks). Once you approve, it's saved to `docs/stack-drafts/capability-<concern>.md`. Use it in this project right away, or copy it into this repo for every project (section 8).
 
-### 3.5 `/rafi:plan-feature <name>`: plan a feature
+### 3.5 `/rafi:spec <feature>`: write a feature spec
 
 | | |
 |---|---|
-| **Use it when** | A feature has a PRD in `docs/prd/` and you're ready to build |
+| **Use it when** | You're about to build a feature and need its spec in `docs/prd/` |
+| **It asks you first** | **A)** "Ask me questions and write it for me", or **B)** "Create the file and I'll fill it in myself, then you review it" |
+| **A: Claude asks** | Up to four plain-language questions at a time: the problem, who uses it, what's in and out, what the user sees and does, what happens when something goes wrong. Then it drafts the acceptance criteria (Given / When / Then), covering the normal case, bad or empty input, not found, no permission (if the project has logins), and limits. Criteria you didn't state yourself are marked **(proposed)**, and you confirm, change, or remove each one |
+| **B: you fill it** | It creates `docs/prd/<feature>.md` from the template with a hint per section and one finished example criterion, then waits. When you say you're done, it reviews the file: vague criteria ("works well"), missing failure cases, scope that no criterion covers. It suggests a rewrite for each problem and edits only what you accept |
+| **It creates** | `docs/prd/<feature>.md` |
+| **It never** | Asks about code or libraries; writes code or a plan; keeps a requirement you didn't agree to |
+
+```
+you:    /rafi:spec lesson tags
+claude: How do you want to write this spec?
+        A) Ask me questions and write it for me
+        B) Create the file and I'll fill it in myself, then you review it
+you:    A
+claude: 1. What problem do tags solve for students?  2. Who adds the tags?
+        3. Should a student be able to see all tags somewhere?  4. Anything out of scope?
+...
+claude: Acceptance criteria:
+        - Given a lesson tagged "grammar", when I open /tags/grammar, then I see that lesson.
+        - Given a tag with no lessons, when I open its page, then I get a 404. (proposed)
+        Keep, change, or remove the proposed ones?
+```
+**Next step:** `/clear`, then `/rafi:plan-feature lesson tags`.
+
+### 3.6 `/rafi:plan-feature <name>`: plan a feature
+
+| | |
+|---|---|
+| **Use it when** | A feature has a spec in `docs/prd/` (from `/rafi:spec`) and you're ready to build. Without a spec, it tells you to run `/rafi:spec` first |
 | **It reads** | The PRD, `docs/architecture.md`, `docs/stack-profile.md`, and the code the feature touches |
 | **It asks you** | For acceptance criteria if they're missing or not testable. It never invents them |
 | **It proposes** | Slices in build order (each a thin vertical piece: data → logic → route → tests → UI), the files for each, data and API changes, test cases per slice, risks, and which audits each slice will trigger |
 | **It never** | Writes code or creates files |
 
-### 3.6 `/rafi:slice <name>`: build one piece
+### 3.7 `/rafi:slice <name>`: build one piece
 
 | | |
 |---|---|
@@ -171,7 +198,7 @@ It asks which frameworks it must work with, hosted or self-hosted, and budget. I
 | **It reports** | Five lines or fewer, ending with only a commit message such as `feat(tags): add tag pages` |
 | **It never** | Starts without an approved plan; commits |
 
-### 3.7 `/rafi:fix-issue <description>`: fix a bug
+### 3.8 `/rafi:fix-issue <description>`: fix a bug
 
 | | |
 |---|---|
@@ -179,11 +206,11 @@ It asks which frameworks it must work with, hosted or self-hosted, and budget. I
 | **It reports** | Root cause, fix, test added, ending with only a commit message such as `fix(tags): match tags case-insensitively` |
 | **It never** | Patches symptoms instead of the cause; commits |
 
-### 3.8 `/rafi:release-check`: before launch
+### 3.9 `/rafi:release-check`: before launch
 
 Runs `pnpm check` and `pnpm build`, plus `pnpm test:e2e` and `pnpm lighthouse` if they exist, then the security, performance, and accessibility audits on the whole project (and SEO if the site has public pages). It reports Critical and High findings only and ends with a verdict, **ship** or **hold**, listing the blockers. It reminds you of the checks code can't do: search engine setup, real-user speed data, keyboard and screen-reader walkthrough, hosting settings, rollback plan.
 
-### 3.9 `/rafi:retro`: learn from a session
+### 3.10 `/rafi:retro`: learn from a session
 
 Reviews the conversation and the audit logs for corrections, repeated instructions, failed commands, recurring findings, and time-wasting surprises. It proposes at most seven items, each sorted into one of:
 - a project gotcha (goes in `CLAUDE.md`)
@@ -193,7 +220,7 @@ Reviews the conversation and the audit logs for corrections, repeated instructio
 
 It applies only what you approve. It never edits the plugin itself.
 
-### 3.10 The four audits
+### 3.11 The four audits
 
 | Command | Checks against | Run it when you changed |
 |---|---|---|
@@ -204,7 +231,7 @@ It applies only what you approve. It never edits the plugin itself.
 
 **Scope:** `diff` (your branch compared with `main`, the default), `full` (everything), or a path or feature name such as `src/features/tags`. How they work is in section 6.
 
-### 3.11 `/rafi:code-review [scope]`
+### 3.12 `/rafi:code-review [scope]`
 
 Reviews changes against the production code standards (12 sections: thinking before coding, security, error handling, quality, validation, tests, performance, logging, configuration, frontend, git discipline, documentation). Findings are graded **Blocker / Major / Minor / Nit**, one line each with `file:line`, ending with **approve** or **changes needed**. Run it before any commit you make outside a slice.
 
@@ -509,7 +536,7 @@ claude-plugins/
         │   └── plugin.json       the plugin's name and version
         ├── skills/               one folder per command, each with a SKILL.md
         │   ├── brainstorm/  bootstrap-project/  add-stack/  add-capability/
-        │   ├── plan-feature/  slice/  fix-issue/  release-check/  retro/
+        │   ├── spec/  plan-feature/  slice/  fix-issue/  release-check/  retro/
         │   └── security-audit/  seo-audit/  performance-audit/
         │       accessibility-audit/  code-review/     (each has references/)
         ├── agents/               code-reviewer, security-auditor, test-writer

@@ -8,7 +8,7 @@
       "name": "rafi",
       "source": "./plugins/rafi",
       "description": "Personal full-stack workflow: brainstorm, audits, review, slice workflow, agents, hooks, stack profiles, capabilities catalog.",
-      "version": "1.4.0"
+      "version": "1.5.0"
     }
   ],
   "metadata": {

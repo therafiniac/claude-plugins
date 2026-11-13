@@ -1,6 +1,6 @@
 # claude-plugins
 
-A private Claude Code plugin marketplace, `rafi-tools`, holding one plugin, **`rafi`**. It adds `/rafi:` commands that take a project from an idea to production: choose the stack, scaffold, specify, plan, build in tested slices, review and audit, branch, commit, merge, release, and maintain.
+A private Claude Code plugin marketplace, `rafi-tools`, holding two plugins: **`rafi`** and **`brain`** ([section 13](#13-brain-plugin)). `rafi` adds `/rafi:` commands that take a project from an idea to production: choose the stack, scaffold, specify, plan, build in tested slices, review and audit, branch, commit, merge, release, and maintain.
 
 - **This README** is the reference: every command, the catalog, the audits, the hooks, and how to change the plugin.
 - The **[claude-template README](https://github.com/therafiniac/claude-template)** is the user guide: setup, a first project, the daily workflow.
@@ -18,6 +18,7 @@ A private Claude Code plugin marketplace, `rafi-tools`, holding one plugin, **`r
 10. [Design decisions](#10-design-decisions)
 11. [Troubleshooting](#11-troubleshooting)
 12. [Known caveats](#12-known-caveats)
+13. [brain plugin](#13-brain-plugin)
 
 ---
 
@@ -338,6 +339,10 @@ claude-plugins/
 ├── .claude-plugin/marketplace.json     marketplace and plugin version
 ├── .github/                            validate.yml, dependabot.yml (actions)
 ├── tools/                              check-plugin.sh, test-guard.sh
+├── plugins/brain/                      The Brain Notion system (section 13)
+│   ├── .claude-plugin/plugin.json
+│   ├── references/                     databases.md (IDs), notion.md (write protocol), conventions.md
+│   └── skills/                         capture client daily review
 └── plugins/rafi/
     ├── .claude-plugin/plugin.json      name and version
     ├── skills/                         one folder per command (SKILL.md)
@@ -396,3 +401,20 @@ claude-plugins/
 - As of September 2026, `astro check` refuses TypeScript 7, so the Astro profile pins `typescript@^6`.
 - Eval graders are model-judged; use several runs and read the pass rate.
 - The hooks need `jq`; their default paths need `pnpm`.
+
+## 13. brain plugin
+
+Runs **The Brain**, the Notion operating system (PARA + GTD), through the Notion connector. Install: `claude plugin install brain@rafi-tools`; update like `rafi`. Requires the Notion connector to be connected.
+
+| Command | Does | Example |
+|---|---|---|
+| `/brain:capture <anything>` | Add, update, find, or archive personal items: tasks, notes, ideas, resources, assets, projects, goals, books, courses, habits, journal, people, prompts, trips | `/brain:capture task call bank tomorrow P2` |
+| `/brain:client <what happened>` | Business pipeline: lead, interaction, discovery, proposal, convert to client, kick-off, project log, deliverable, payment, website, close | `/brain:client 2h on Lakshmi Kashi website, navbar done` |
+| `/brain:daily [morning\|evening]` | Morning plan (habits page, today and overdue, pick three) or evening close-out (habits, tasks, journal) | `/brain:daily` |
+| `/brain:review [weekly\|monthly\|yearly] [personal\|business]` | Sunday, monthly, and yearly reviews; proposes fixes, applies after a yes | `/brain:review monthly` |
+
+All four also trigger from plain requests ("add this lead…", "plan my day").
+
+Rules the skills enforce (`plugins/brain/references/notion.md`): fetch the live schema before writing, never write formulas, rollups, or auto fields (`Completion Date`, `Overdue`), resolve relations instead of guessing, archive instead of delete, no secrets in Notion, confirm bulk changes. Excluded databases: Investment, Cards, Credit Cards, job Applications, laptop Comparison, Websites Master File, Credentials, Semigon Daily Reports.
+
+Changing it: edit `plugins/brain/`, raise `version` in `plugins/brain/.claude-plugin/plugin.json` and the `brain` entry in `.claude-plugin/marketplace.json`, run `claude plugin validate ./plugins/brain` and `tools/check-plugin.sh`. When a Notion database is moved or recreated, update its data source in `references/databases.md`.

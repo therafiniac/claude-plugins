@@ -35,6 +35,7 @@ jobs:
         run: |
           claude plugin validate .
           claude plugin validate ./plugins/rafi
+          claude plugin validate ./plugins/brain
 
       - name: Structural checks
         env:

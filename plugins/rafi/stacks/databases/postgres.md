@@ -37,3 +37,30 @@ podman run -d --name <project>-pg-test -e POSTGRES_PASSWORD=postgres -e POSTGRES
 - No N+1: use joins or `WHERE id = ANY(...)`.
 - The connection pool is sized for the deployment. Slow-query logging or `pg_stat_statements` is enabled.
 - No long transactions, and no locks held across network calls.
+
+## Migration checks (used by /rafi:migration)
+- Every migration sets a short `lock_timeout` (for example `SET lock_timeout = '5s'`), so blocked DDL fails fast instead of queueing all traffic behind it.
+- Indexes on populated tables: `CREATE INDEX CONCURRENTLY`. It cannot run inside a transaction, so put it in its own migration and disable the tool's transaction wrapper for that file.
+- New column with a constant default: safe (no rewrite). A volatile default (for example `gen_random_uuid()`, `random()`, `clock_timestamp()`) rewrites the table: add the column nullable, backfill, then set the default.
+- `SET NOT NULL` on a populated column: first `ADD CONSTRAINT ... CHECK (col IS NOT NULL) NOT VALID`, then `VALIDATE CONSTRAINT`, then `SET NOT NULL`, then drop the check.
+- New foreign key on a populated table: `ADD CONSTRAINT ... NOT VALID`, then `VALIDATE CONSTRAINT` in a separate migration.
+- Column type changes usually rewrite the table under an exclusive lock. Treat them as breaking: add a new column, backfill, switch reads, drop the old one.
+- Renames and drops break the running app version. Always expand → contract across deploys.
+- Migrations run as a release step before the new app version starts (for example the host's pre-deploy command running `db:migrate`), with a role that has DDL rights. The app's runtime role has none.
+
+## CI (added to .github/workflows/ci.yml)
+Add a service container to the `check` job, with the same major version as production, and point the tests at it:
+```yaml
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
+```
+Run `pnpm db:migrate` before `pnpm check`.

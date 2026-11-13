@@ -27,6 +27,12 @@ Notes for whoever fills this in:
 
 ## Accessibility checks (frameworks only, added to accessibility-audit)
 
+## Migration checks (databases only, used by /rafi:migration)
+<Operations that lock, rewrite, or block on this database, and the safe alternative for each. How migrations run in deploy, and with which role.>
+
+## CI (added to .github/workflows/ci.yml)
+<Anything the CI job needs for this stack: a service container, env variables with safe test values, extra setup steps.>
+
 ## Adaptation notes (only for a new language or toolchain)
 The project template assumes Node and pnpm. For anything else, list the changes:
 - `.claude/typecheck-cmd`: first line is the fast static check the Stop hook runs (for example `mypy .`).

@@ -3,7 +3,7 @@ name: performance-audit
 description: Run the performance audit standard against this codebase. Use only when asked to performance-audit, or to check Core Web Vitals, caching, queries, or bundle size.
 argument-hint: "[diff | full | path or feature]"
 context: fork
-allowed-tools: Read Grep Glob Bash(git diff *) Bash(git log *) Bash(git status)
+allowed-tools: Read Grep Glob Bash(git diff *) Bash(git log *) Bash(git status) Bash(pnpm build) Bash(pnpm lighthouse) Bash(pnpm why *) Bash(pnpm list *)
 ---
 Scope: $ARGUMENTS. Blank or `diff` = current branch vs main. `full` = whole codebase. Anything else = a path or feature.
 
@@ -26,6 +26,7 @@ If `docs/stack-profile.md` exists, also apply its performance checks.
 
 ## Method
 - Measure before judging. Use the database's own query planner, a bundle analyzer, and Lighthouse CLI where available. Never propose a fix without a measurement.
+- Run `pnpm build` and report route or bundle sizes from its output. Run `pnpm lighthouse` if the script exists and the scope includes pages.
 - Judge every in-scope item: Pass, Fail, N/A (one-line reason), or Needs measurement (state the exact tool and command).
 - Cite `file:line` for every Fail. Report only. Do not edit code.
 

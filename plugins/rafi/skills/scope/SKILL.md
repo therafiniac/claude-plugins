@@ -70,7 +70,8 @@ Write no code and do not edit any other doc.
    - If the argument is `agreed`, set both status lines to `Agreed on <today>` and write the Baseline section in `docs/scope/work-scope.md`. Never change the baseline afterwards.
    - Once agreed, a deliverable that is not in the baseline goes under "Changes since agreement" in both files, never into "What you get". Flag it to me in one line, because it needs pricing before work starts.
 
-8. Last line: `Next:` plus one step:
+8. Commit the scope files following `${CLAUDE_PLUGIN_ROOT}/skills/commit/SKILL.md` (`docs(scope): ...`).
+9. Last line: `Next:` plus one step:
    - draft, not yet agreed → estimate from `docs/scope/work-scope.md`, share `docs/scope/client-scope.md` with the client, then `/rafi:scope agreed` once they accept
    - new items since agreement → price them for the client before building
    - agreed, items not started → `/rafi:spec <next deliverable>` if it has no spec, else `/rafi:plan-feature <next deliverable>`

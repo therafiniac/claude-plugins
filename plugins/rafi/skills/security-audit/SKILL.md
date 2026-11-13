@@ -3,7 +3,7 @@ name: security-audit
 description: Run the security audit standard (OWASP-aligned) against this codebase. Use only when asked to security-audit or security-review, or to check auth, API, upload, or dependency security.
 argument-hint: "[diff | full | path or feature]"
 context: fork
-allowed-tools: Read Grep Glob Bash(git diff *) Bash(git log *) Bash(git status)
+allowed-tools: Read Grep Glob Bash(git diff *) Bash(git log *) Bash(git status) Bash(pnpm audit) Bash(pnpm audit --prod) Bash(pnpm audit --prod *) Bash(pnpm outdated) Bash(pnpm outdated *) Bash(pnpm why *) Bash(pnpm licenses list *)
 ---
 Scope: $ARGUMENTS. Blank or `diff` = current branch vs main. `full` = whole codebase. Anything else = a path or feature name.
 
@@ -27,6 +27,7 @@ Read `00-overview.md` there (severity scale, statuses). Then read only the files
 If `docs/stack-profile.md` exists, also apply its security checks.
 
 ## Method
+- Dependencies in scope (§9, `full`, or a lockfile change): run `pnpm audit --prod` and `pnpm outdated`, and cite their output. Never judge §9 from `package.json` alone.
 - Judge every in-scope item: Pass, Fail, N/A (one-line reason), or Needs manual verification.
 - Cite `file:line` for every Fail. For a Pass, name the file or mechanism that satisfies it. Never write a generic "looks fine".
 - Report only. Do not edit code.

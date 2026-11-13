@@ -132,6 +132,9 @@ Start at level 5 and raise it as the code allows.
 - `.lintstagedrc.json`: add `"*.php": "vendor/bin/phpcbf -q"`.
 - Deployment: upload only the custom theme and plugin (SFTP, rsync, or the host's Git deploy from a GitHub Action). Never deploy `wp-config.php`, uploads, or core.
 
+## CI (added to .github/workflows/ci.yml)
+Before `pnpm install`, add a PHP setup step (for example `shivammathur/setup-php`, pinned to a commit SHA) with PHP 8.3 and Composer, then `composer install --no-interaction --prefer-dist`. `pnpm check` then runs PHPStan and PHPCS as locally.
+
 ## Sources
 - Minimum-version and 7.0 release reports: https://mysites.guru/blog/wordpress-7-requirements/ and https://wp-umbrella.com/blog/wordpress-7-0-release-status-and-timeline/ (third-party; confirm on wordpress.org)
 - WordPress Developer Resources: Plugin Handbook (Security), Coding Standards, `@wordpress/env`, `@wordpress/scripts`, and the Block Editor Handbook. Re-verify current details there before relying on them.

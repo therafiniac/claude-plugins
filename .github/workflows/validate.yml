@@ -1,0 +1,45 @@
+# Validates the plugin on every pull request and push to main.
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      # Pinned so a CLI release can't change validation rules under you. Raise it deliberately.
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code@2.1.325
+
+      - name: Validate manifests
+        run: |
+          claude plugin validate .
+          claude plugin validate ./plugins/rafi
+
+      - name: Structural checks
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
+        run: tools/check-plugin.sh
+
+      - name: Guard hook tests
+        run: tools/test-guard.sh

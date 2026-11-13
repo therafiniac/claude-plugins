@@ -11,6 +11,7 @@ MongoDB with Mongoose. Tests use `mongodb-memory-server`.
 - Models are used only in the feature's repo layer. Indexes are declared in the schema.
 - Tests use `mongodb-memory-server`, with collections reset between tests.
 - Idempotent seed script `db:seed` for local development.
+- Versioned migration scripts in `migrations/`, applied by `db:migrate` and recorded in a `migrations` collection (for example with `migrate-mongo`), so every environment knows which have run.
 
 ## Conventions
 - `.lean()` and field projection on reads. Never return raw documents to clients; map to DTOs (no password hashes, no internal flags).
@@ -28,3 +29,13 @@ MongoDB with Mongoose. Tests use `mongodb-memory-server`.
 - Compound index order matches the query: equality fields, then sort, then range.
 - No N+1: batch with `$in` or an aggregation instead of a query per item.
 - The connection pool is sized for the deployment. In serverless, keep it small and reuse the connection.
+
+## Migration checks (used by /rafi:migration)
+- A new required field: old documents lack it, so saving them fails validation. Backfill first, then make the field required in the schema.
+- Renames and type changes: the app reads both shapes during the transition. Backfill with `$rename` or `$set` in batches.
+- Backfills use `bulkWrite` in batches filtered on documents not yet migrated (so a rerun skips finished work), iterate by `_id` ranges, and log progress.
+- Index builds on large collections use heavy resources: build in a low-traffic window, or as a rolling build on a managed cluster. Create the index before deploying the code that relies on it.
+- Dropping a field or collection happens only after the code that reads it is gone from production.
+
+## CI (added to .github/workflows/ci.yml)
+None. Tests use `mongodb-memory-server`, which downloads a MongoDB binary on first run. Cache it between CI runs if downloads are slow.

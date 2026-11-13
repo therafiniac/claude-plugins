@@ -9,6 +9,7 @@ Slice: $ARGUMENTS
 Precondition: an approved plan exists in this conversation or in `docs/prd/`. If not, tell me to run `/rafi:plan-feature` first and stop.
 
 1. Restate the slice scope in three lines. Implement only that scope.
+   If the slice changes a database schema, apply `${CLAUDE_PLUGIN_ROOT}/skills/migration/SKILL.md` steps 2, 3, and 5 to that change. Additive changes are done in this slice. For a breaking change, build only the expand phase here and list the remaining phases in `docs/runbook.md` under "Pending migrations".
 2. Write tests alongside the code (cases in `.claude/rules/testing.md`). Use the `rafi:test-writer` subagent for large test suites.
 3. Run `pnpm check`. Fix until it passes.
 4. Run the `rafi:code-reviewer` subagent on the diff. Fix Blocker and Major findings.
@@ -18,5 +19,6 @@ Precondition: an approved plan exists in this conversation or in `docs/prd/`. If
    - new queries, lists, pages, heavy dependencies → `rafi:performance-audit` skill with `diff`
    - UI components, forms, layout, color → `rafi:accessibility-audit` skill with `diff`
 6. If the slice adds a user-facing flow, add or update a Playwright E2E test for it (`pnpm test:e2e`).
-7. Report in five lines or fewer: what changed, checks run, findings fixed and remaining. Then the commit message alone on its own line, `type(scope): subject`, with no explanation around it. Do not commit unless I say so.
-8. Last line: `Next:` plus one step. If the approved plan has slices left: `/clear`, then `/rafi:slice <next slice name>`. If this was the last slice: run `pnpm check`, push the branch, and merge (and `/rafi:release-check` before a launch). If a Critical or High finding is still open: `/rafi:fix-issue <finding>`. It is only a suggestion. Never run it.
+   Update the docs the slice changes: `docs/architecture.md` (data model, routes, env vars), `.env.example`, and `docs/runbook.md` (new services, workers, alerts, or deploy steps).
+7. Report in five lines or fewer: what changed, checks run, findings fixed and remaining. Then commit the slice following `${CLAUDE_PLUGIN_ROOT}/skills/commit/SKILL.md` (on its work branch, `type(scope): subject`, no attribution, then push) and give the commit header.
+8. Last line: `Next:` plus one step. If the approved plan has slices left: `/clear`, then `/rafi:slice <next slice name>`. If this was the last slice: `/rafi:merge`. If a Critical or High finding is still open: `/rafi:fix-issue <finding>`. It is only a suggestion. Never run it.

@@ -20,9 +20,10 @@ The spec describes **what** the feature does from the user's point of view, neve
    - who uses the feature
    - what it includes (scope), and what it deliberately leaves out (non-goals)
    - what the user sees and does, step by step, and what happens when something goes wrong
+   - in a later round, the qualities around it: how fast it must feel, whether it handles personal data, whether it should launch to everyone at once or be switchable off, and what you want to measure (for example how many people finish the flow)
    Do not ask about code, files, or libraries.
 4. Draft the acceptance criteria as `Given <situation>, when <action>, then <result>`, from my answers. Cover: the normal case, invalid or empty input, something that does not exist (not found), someone without permission (only if the project has logins), and limits (very long, zero, many). Mark any criterion I did not state myself as **(proposed)**. Show the list and wait until I confirm, change, or remove each proposed one. Never keep a requirement I did not agree to.
-5. Fill the remaining sections from my answers: data and permissions notes only where they follow from what I said, risks and open questions, and the audit checkboxes using the Audit triggers table in `CLAUDE.md`.
+5. Fill the remaining sections from my answers: data and permissions notes only where they follow from what I said, the non-functional requirements, the rollout and rollback section, analytics events, risks and open questions, and the audit checkboxes using the Audit triggers table in `CLAUDE.md`. Write "none" in a section I said does not apply; leave nothing blank.
 6. Write the file from the template and show it.
 
 ## B) I fill it
@@ -31,7 +32,9 @@ The spec describes **what** the feature does from the user's point of view, neve
    - each acceptance criterion has a clear, checkable **then**; flag vague ones ("works well", "is fast")
    - missing failure cases: invalid input, not found, no permission, limits
    - conflicts between scope and non-goals, and anything mentioned in scope that no criterion covers
+   - non-functional requirements, rollout and rollback, and analytics events: filled in, or explicitly "none"
 5. List the problems with a suggested rewrite for each. Edit the file only for the suggestions I accept.
 
 ## Finish
+Commit the spec following `${CLAUDE_PLUGIN_ROOT}/skills/commit/SKILL.md` (`docs(prd): add <feature> spec`); on `main` or `dev` it first creates `feat/<feature>` from `dev`, which the feature then uses.
 Last line: `Next:` `/clear`, then `/rafi:plan-feature <feature>`. It is only a suggestion. Never run it.

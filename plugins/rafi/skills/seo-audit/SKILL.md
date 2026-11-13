@@ -3,7 +3,7 @@ name: seo-audit
 description: Run the SEO audit standard against this site. Use only when asked to SEO-audit, or to check metadata, indexing, structured data, or crawlability.
 argument-hint: "[diff | full | path or feature]"
 context: fork
-allowed-tools: Read Grep Glob Bash(git diff *) Bash(git log *) Bash(git status)
+allowed-tools: Read Grep Glob Bash(git diff *) Bash(git log *) Bash(git status) Bash(pnpm build) Bash(pnpm lighthouse)
 ---
 Scope: $ARGUMENTS. Blank or `diff` = current branch vs main. `full` = whole site. Anything else = a path or route.
 
@@ -25,7 +25,7 @@ If `docs/stack-profile.md` exists, also apply its SEO checks.
 
 ## Method
 - Judge every in-scope item: Pass, Fail, N/A (one-line reason), or Needs manual verification.
-- Check rendered HTML and response headers, not only source. Use the running app or a local build if available.
+- Check rendered HTML and response headers, not only source. Run `pnpm build` and inspect the built output, and `pnpm lighthouse` if the script exists.
 - Items needing Search Console, PageSpeed Insights, or a live crawl are Needs manual verification. Do not guess them.
 - Cite `file:line` or URL for every Fail. Report only. Do not edit code.
 

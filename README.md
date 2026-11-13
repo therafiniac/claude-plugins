@@ -1,659 +1,398 @@
 # claude-plugins
 
-**My personal Claude Code toolkit.** This repo is a private plugin marketplace called `rafi-tools`, holding one plugin called **`rafi`**. Once installed, Claude Code gains a set of `/rafi:` commands that take a project from a rough idea to a launched site: shape the idea, pick the technologies, set up the project, plan features, build them piece by piece with tests, review and audit them, and check everything before launch.
+A private Claude Code plugin marketplace, `rafi-tools`, holding one plugin, **`rafi`**. It adds `/rafi:` commands that take a project from an idea to production: choose the stack, scaffold, specify, plan, build in tested slices, review and audit, branch, commit, merge, release, and maintain.
 
-> **Which README do I need?**
-> - The **[claude-template README](https://github.com/therafiniac/claude-template)** is the user guide: setup, a full worked example from idea to live site, and the daily routine. **New? Start there.**
-> - **This one** is the reference manual: every command in detail, the library catalog, the audits, the automatic parts, and how to change the toolkit itself.
+- **This README** is the reference: every command, the catalog, the audits, the hooks, and how to change the plugin.
+- The **[claude-template README](https://github.com/therafiniac/claude-template)** is the user guide: setup, a first project, the daily workflow.
 
 ## Contents
-1. [What this is, and why it is a separate repo](#1-what-this-is-and-why-it-is-a-separate-repo)
-2. [Install, check, update, disable, remove](#2-install-check-update-disable-remove)
-3. [Command reference](#3-command-reference)
-4. [The capabilities catalog (libraries)](#4-the-capabilities-catalog-libraries)
-5. [Stack profiles (frameworks and databases)](#5-stack-profiles-frameworks-and-databases)
-6. [The audits](#6-the-audits)
-7. [The automatic parts: agents and hooks](#7-the-automatic-parts-agents-and-hooks)
-8. [Maintaining the plugin (worked example)](#8-maintaining-the-plugin-worked-example)
+1. [Install and update](#1-install-and-update)
+2. [Commands](#2-commands)
+3. [Git workflow commands](#3-git-workflow-commands)
+4. [Capabilities catalog](#4-capabilities-catalog)
+5. [Stack profiles](#5-stack-profiles)
+6. [Audits](#6-audits)
+7. [Agents and hooks](#7-agents-and-hooks)
+8. [Changing the plugin](#8-changing-the-plugin)
 9. [Repo layout](#9-repo-layout)
 10. [Design decisions](#10-design-decisions)
 11. [Troubleshooting](#11-troubleshooting)
-12. [FAQ](#12-faq)
-13. [Known caveats](#13-known-caveats)
+12. [Known caveats](#12-known-caveats)
 
 ---
 
-## 1. What this is, and why it is a separate repo
+## 1. Install and update
 
-**In plain words:** a plugin is a package of commands and rules that you install into Claude Code once, and then use in every project. This plugin is my personal way of building software, written down so Claude follows it every time.
+The repo is private: git on the machine must be authenticated to GitHub (SSH key or token).
 
-The whole setup has two halves that change at different speeds:
+| Task | Command |
+|---|---|
+| Install (once per machine) | `claude plugin marketplace add therafiniac/claude-plugins` then `claude plugin install rafi@rafi-tools` |
+| Check | `claude plugin list` (rafi enabled), `claude plugin details rafi` (contents and context cost), or type `/rafi:` |
+| Update | `claude plugin marketplace update rafi-tools` then `claude plugin update rafi@rafi-tools` |
+| Enable for one project only | `claude plugin install rafi@rafi-tools --scope project` (template projects already have it in `.claude/settings.json`) |
+| Pause / remove | `claude plugin disable rafi@rafi-tools` / `claude plugin uninstall rafi@rafi-tools` |
 
-| Half | Lives in | How often it changes |
+Restart Claude Code after installing or updating.
+
+A plugin cannot ship a project's `CLAUDE.md`, rules, permissions, or git hooks. Those come from the template, copied into each project.
+
+## 2. Commands
+
+Workflow commands are manual-only (`disable-model-invocation`): Claude never starts them itself, and they cost no context until typed. Audits and code review can also be started by Claude when a change needs them.
+
+Every command ends with one `Next:` line suggesting the step that fits the outcome. Claude never runs it. When one command calls another, only the outer command's `Next:` counts.
+
+### Overview
+
+| Stage | Command | Writes |
 |---|---|---|
-| **The toolkit**: commands, audit checklists, agents, hooks, the catalog of frameworks, databases, and libraries | This repo (the plugin) | Often. Improve it once, and every project gets the improvement |
-| **The project files**: `CLAUDE.md`, rules, permission settings, commit checks, docs folders | The `claude-template` repo, copied into each project | Rarely. These must live inside each project |
+| Idea | `/rafi:brainstorm <idea>` | `docs/brainstorm.md` |
+| Idea (existing project) | `/rafi:discuss <topic>` | `docs/discussions/<date>-<topic>.md` |
+| Setup | `/rafi:bootstrap-project <idea>` | scaffold, `docs/stack-profile.md`, filled docs, first commit, `dev` |
+| Catalog | `/rafi:add-stack <name>` | `docs/stack-drafts/<kind>-<name>.md` |
+| Catalog | `/rafi:add-capability <concern> [option]` | code, stack profile, ADR (or a draft) |
+| Feature | `/rafi:spec <feature>` | `docs/prd/<feature>.md` |
+| Feature | `/rafi:plan-feature <name>` | nothing (plan in chat) |
+| Build | `/rafi:slice <name>` | code, tests, docs, a commit |
+| Build | `/rafi:fix-issue <description>` | failing test, fix, a commit |
+| Build | `/rafi:migration <change>` | migration files, backfill script, tests, a commit |
+| Git | `/rafi:branch`, `/rafi:commit`, `/rafi:merge`, `/rafi:pr` | see section 3 |
+| Release | `/rafi:release-check` | audit logs |
+| Release | `/rafi:release`, `/rafi:hotfix` | see section 3 |
+| Maintain | `/rafi:status` | nothing |
+| Maintain | `/rafi:deps [mode]` | merges approved updates |
+| Maintain | `/rafi:sync-template [path]` | template files, a commit |
+| Maintain | `/rafi:retro` | rules, gotchas, a commit |
+| Client | `/rafi:scope [agreed]` | `docs/scope/client-scope.md`, `docs/scope/work-scope.md` |
+| Check | `/rafi:code-review [scope]` | nothing |
+| Check | `/rafi:security-audit`, `/rafi:seo-audit`, `/rafi:performance-audit`, `/rafi:accessibility-audit` `[diff\|full\|path]` | `docs/audits/<name>.md` |
 
-A plugin cannot carry a project's `CLAUDE.md`, rules, or permissions. That's the only reason the template exists. You never copy the toolkit into a project; you install it once per computer.
+### `/rafi:brainstorm <idea>`
+New projects only; in a bootstrapped project it points to `/rafi:discuss`.
+- Asks (up to four questions per round): users and problem, 3–5 core flows, non-goals, who edits content, data (accounts, payments, personal data), constraints (budget, hosting, deadline, traffic, languages), what exists.
+- Proposes 2–3 approaches with effort, running cost, trade-offs, and a recommendation.
+- Builds a stack from the catalog: `Concern | Proposed | Alternatives | Why`. Never proposes `hold`. Lists concerns the catalog lacks.
+- Writes `docs/brainstorm.md` (under 80 lines). No code, no install.
 
-Everything the plugin provides is prefixed `rafi:` (for example `/rafi:slice`). The prefix keeps these commands separate from Claude's built-in ones and from any other plugin.
+### `/rafi:discuss <topic>`
+Existing projects only. Reads the stack profile, architecture, specs, ADRs, and earlier discussions. Asks about the problem, users, constraints. Proposes 2–3 approaches that fit the current stack, checks the catalog for new needs, and writes `docs/discussions/<date>-<topic>.md`. `Next:` is `/rafi:spec`, `/rafi:add-capability`, `/rafi:add-stack`, or nothing.
 
-## 2. Install, check, update, disable, remove
+### `/rafi:bootstrap-project <idea>`
+Run in a fresh copy of the template.
+1. Reads `docs/brainstorm.md` if present; asks only for what is missing: name, purpose, framework, database, hosting (default Railway), auth, non-goals, **merge mode** (`local` or `github`).
+2. Capability table (`Concern | Proposed | Alternatives`) for confirmation.
+3. Verifies each chosen option against current official docs, then proposes one scaffold plan. **Waits for approval.**
+4. Scaffolds with the framework's official generator, then applies the profiles. Never overwrites `CLAUDE.md`, `README.md`, `.gitignore`, `.claude/`, `.husky/`, `.github/`, `docs/`, `SECURITY.md`, `CHANGELOG.md`. Asks before approving package build scripts.
+5. Required in every project: scripts `dev`, `build`, `typecheck`, `lint`, `test`, `check`; `packageManager`; `.nvmrc`; Prettier, ESLint, Vitest; a validated env module; `.env.example` whose values pass validation (CI builds with them); a health endpoint; one passing test; husky, lint-staged, commitlint; `prepare` = `husky && git config branch.main.mergeOptions --no-ff && git config branch.dev.mergeOptions --no-ff`. E2E and Lighthouse if the framework profile defines them. The profiles' `## CI` sections are applied to `ci.yml`.
+6. Writes `docs/stack-profile.md`, fills `CLAUDE.md` (including `Merge mode:`), replaces `README.md` with a project README, fills `docs/architecture.md`, `docs/runbook.md` (production and staging), `SECURITY.md`, writes `docs/adr/001-stack.md` and `docs/prd/<name>.md`.
+7. Installs, enables hooks, runs `pnpm check` and `pnpm build`, and tests commitlint (rejects no-scope and attribution messages).
+8. Commits on `main` as `chore(scaffold): initial project`, then creates `dev`.
+9. Lists manual steps: create the GitHub repo and push `main` and `dev`, set `dev` as default branch, merge-commit-only (github mode), rulesets, hosting for production and staging.
 
-### Install (once per computer)
-```bash
-claude plugin marketplace add therafiniac/claude-plugins
-claude plugin install rafi@rafi-tools
-```
-The first command tells Claude Code where the marketplace is. The second installs the plugin from it. **Restart Claude Code** afterwards.
+### `/rafi:add-stack <name>`
+Interviews you (kind, language, versions, tooling, deploy, paired databases), reads the official docs for those versions, drafts a profile from `stacks/_template.md` with sources and, for non-Node stacks, full adaptation notes. Saves `docs/stack-drafts/<kind>-<name>.md` after approval.
 
-The repo is private, so git on this computer must be logged in to GitHub first: an SSH key (template README, 5.1) or a token with an `https://` address.
+### `/rafi:add-capability <concern> [option]`
+- **Add mode** (concern in the catalog, project bootstrapped): proposes the default for your framework (filtered by "works with"), verifies current docs, shows a plan, **waits**, implements, runs checks, updates `docs/stack-profile.md`, writes an ADR, commits.
+- **Draft mode** (concern or option not in the catalog): interviews you, researches official docs, drafts the entry in catalog format, saves `docs/stack-drafts/capability-<concern>.md`.
 
-### Check it worked
-In Claude Code, type `/rafi:`. **Success looks like** a list including `brainstorm`, `bootstrap-project`, `plan-feature`, `slice`, and the audits. Or, in a terminal:
-```bash
-claude plugin list            # rafi should appear as enabled
-claude plugin details rafi    # what it contains and roughly how much of Claude's memory it uses
-```
+### `/rafi:spec <feature>`
+Asks first: **A)** Claude asks and writes, or **B)** you fill the file and Claude reviews.
+- A: up to four plain questions per round (problem, users, scope, non-goals, steps and failures, then performance, personal data, rollout, measurement). Drafts `Given / When / Then` criteria for the normal case, invalid input, not found, no permission, limits. Criteria you didn't state are marked **(proposed)** until you confirm.
+- B: creates the file with hints, then reviews: vague criteria, missing failure cases, scope without criteria, empty non-functional sections.
+- Fills every section or writes "none". Commits `docs(prd): add <feature> spec` (creating `feat/<feature>` from `dev` if you are on `dev`).
 
-### Update to the newest version
-```bash
-claude plugin marketplace update rafi-tools
-claude plugin update rafi@rafi-tools
-```
-Restart Claude Code. Every project on this computer then uses the new version.
+### `/rafi:plan-feature <name>`
+Requires a spec. Proposes vertical slices in dependency order (schema → service → route → tests → UI), files per slice, data model changes classed additive or breaking (breaking changes become a `/rafi:migration` slice), API contract, test cases, how non-functional requirements are met, risks, and the audits each slice triggers. Writes nothing. **Waits for approval.**
 
-### Turn it on for one project only
-Inside the project:
-```bash
-claude plugin install rafi@rafi-tools --scope project
-```
-This writes the setting into the project's `.claude/settings.json`. Projects made from the template already have it, so Claude Code offers to install the plugin when you trust the folder.
+### `/rafi:slice <name>`
+Requires an approved plan.
+1. Restates the slice in three lines; builds only that. Schema changes follow the migration rules; for a breaking change only the expand phase is built and the rest goes to `docs/runbook.md` → Pending migrations.
+2. Tests per `.claude/rules/testing.md` (test-writer agent for large suites).
+3. `pnpm check` until green.
+4. code-reviewer agent; fixes Blocker and Major.
+5. Matching audits; fixes Critical and High; logs the rest.
+6. E2E test for a new user-facing flow. Updates architecture, `.env.example`, runbook.
+7. Commits via `/rafi:commit` rules and pushes the work branch. `Next:` next slice, or `/rafi:merge`.
 
-### Disable or remove
-```bash
-claude plugin disable rafi@rafi-tools     # pause it, keep it installed
-claude plugin uninstall rafi@rafi-tools   # remove it
-```
+### `/rafi:fix-issue <description>`
+Failing test that reproduces the bug (stops if it can't) → one-sentence root cause → minimal fix → `pnpm check` → security-auditor if the cause is security or data → commit `fix(scope): ...`. On `main` or `dev` it first creates `fix/<name>` from `dev`. Production emergencies: `/rafi:hotfix`.
 
-## 3. Command reference
+### `/rafi:migration <change>`
+Stops at once if there is no stack profile or no database.
+- Classifies: **additive** (one step), **breaking** (expand → dual-write → backfill → switch reads → contract, each deployed separately), **data only** (backfill).
+- Checks the database's `## Migration checks` (locks, rewrites, index builds, constraint validation, volume).
+- Proposes phases, deploy order, rollback per phase, backup before destructive steps, tests. **Waits.**
+- Builds the current phase: migration files via the profile's tool, a batched, idempotent, resumable backfill script with `--dry-run`, tests (empty database, existing data preserved, backfill idempotent). Updates the data model, adds an ADR for breaking changes, records remaining phases in the runbook. Commits.
 
-There are two kinds of commands:
-- **Workflow commands** (3.1–3.12) run the building process. They are **manual-only**: Claude never starts them on its own, and they cost nothing in Claude's memory until you type them.
-- **Audits and review** (3.13–3.14) check your work. You can type them, and the workflow commands call them for you when a change needs them.
+### `/rafi:release-check`
+Run on `dev` or a `release/` branch. `pnpm check`, `pnpm build`, `pnpm audit --prod`, E2E and Lighthouse if present; all four audits with `full`; then operational readiness: CI green (asks you), staging tried, runbook and `SECURITY.md` free of placeholders, no blocking pending migration, observability and rate limits wired (missing = High), `.env.example` complete, changelog entries present. Verdict **ship** or **hold** with blockers. `Next:` on ship is `/rafi:release`.
 
-**Every command ends with a `Next:` line** suggesting the step that fits what just happened, for example `Next: /clear, then /rafi:slice tag pages` when the plan has slices left, or `Next: /rafi:fix-issue <finding>` after an audit finds a serious problem. It's only a suggestion: Claude never runs it, and you can ignore it. When one command calls another (a slice running an audit), only the outer command's `Next:` line counts.
+### `/rafi:status`
+Read-only. Branch, uncommitted work, commits ahead of base, `dev` ahead of `main`, last tag, stage, per-spec progress (from code and tests; picks the lower status when unsure), plan progress, open Critical and High findings, pending migrations, scope progress, launch blockers. 15 lines, one `Next:` by fixed priority: commit → finish open release or hotfix → fix serious findings → next migration phase → next slice → plan → spec → merge → new branch → release.
 
-> Example conversations below are **illustrations**. Real wording and choices will differ.
+### `/rafi:deps [dependabot | outdated | <package>]`
+Lists updates (Dependabot branches, or `pnpm outdated`) classed patch, minor, major, actions; you pick. Per update: release notes for every version in between, code search for changed APIs, checks, build, E2E, `pnpm audit --prod`, verdict **merge**, **merge after changes** (with `file:line`), or **hold**. Merges approved ones into `dev` one at a time (`--no-ff` locally, or tells you to merge the PR in github mode). Never edits source code. Major framework, ORM, or auth upgrades go to `/rafi:discuss` first.
 
-### 3.1 `/rafi:brainstorm <idea>`: shape a rough idea
+### `/rafi:sync-template [path]`
+Brings a project up to date with the latest template, using `.claude/template-version` as the merge base.
 
-| | |
+| Files | Treatment |
 |---|---|
-| **Use it when** | You have an idea for a **new** project but haven't decided how to build it or with what. In a project that's already set up, it stops and points you to `/rafi:discuss` (3.5), so it never overwrites the project's original brainstorm |
-| **It asks you** | A few questions at a time: who it's for, the 3–5 core pages or flows, what's out of scope, who edits content and how technical they are, data (logins, payments, personal data), constraints (budget, hosting, deadline, traffic, languages), and what already exists |
-| **It proposes** | 2–3 approaches with effort, running cost, and what each makes easy or hard, plus a recommendation. Then a stack table from the catalog: framework, database, hosting, auth, and every relevant library concern, each with a proposed choice and alternatives |
-| **It creates** | `docs/brainstorm.md`: idea, users, core flows, non-goals, draft acceptance criteria, chosen and rejected approaches, the stack table, open questions |
-| **It never** | Writes code, scaffolds, or installs anything |
+| `.husky/*`, `commitlint.config.cjs`, `.lintstagedrc.json`, `.claude/rules/*`, `.github/workflows/*`, `.github/dependabot.yml`, PR, PRD, and ADR templates | Template-owned. Untouched in the project → replaced. Changed on both sides → three-way merge |
+| `.claude/settings.json` | Merged; project entries kept |
+| `docs/runbook.md`, `SECURITY.md`, `CHANGELOG.md`, `CODEOWNERS` | Created only if missing |
+| `CLAUDE.md`, `docs/architecture.md`, `README.md` | Never written; structural additions shown as suggestions |
+
+Shows everything for approval, re-applies the stack's CI additions, updates `.claude/template-version`, re-enables hooks, runs checks, commits.
+
+### `/rafi:retro`
+Collects corrections, repeated instructions, failed commands, recurring findings, and time sinks. Proposes up to seven items, each classed: gotcha (`CLAUDE.md`), rule (`.claude/rules/`), enforcement (exact hook, lint, or CI config), plugin improvement (a list for this repo), or ignore. Applies approved project items and commits them. Never edits the plugin.
+
+### `/rafi:scope [agreed]`
+Writes `docs/scope/client-scope.md` (plain language, under 50 lines) and `docs/scope/work-scope.md` (full breakdown for estimating). Progress per deliverable: Done (code and test), In progress, Not started. `agreed` freezes a baseline; later additions go under "Changes since agreement". Never writes prices or hours. Commits.
+
+### `/rafi:code-review [diff | path]`
+Reviews against the 12-section code standard, choosing sections by what changed (migrations also use the stack profile's `## Migration checks`). Findings Blocker / Major / Minor / Nit with `file:line`, verdict approve or changes needed. Read-only.
+
+## 3. Git workflow commands
+
+The rules live in each project's `.claude/rules/git.md` (from the template). Summary:
 
 ```
-you:    /rafi:brainstorm booking site for a yoga studio
-claude: 1. Who books, and how far ahead?  2. Does the studio take payment online?
-        3. Who manages the class schedule?  4. Budget per month?
-...
-claude: | Concern  | Proposed     | Alternatives | Why                         |
-        | Auth     | better-auth  | clerk        | members log in, low cost    |
-        | Payments | razorpay     | stripe       | customers pay by UPI        |
-        | Email    | resend       | postmark     | booking confirmations       |
-        ...
-```
-**Next step:** `/rafi:bootstrap-project`, which reads `docs/brainstorm.md` instead of asking again.
-
-### 3.2 `/rafi:bootstrap-project <idea>`: set up a new project
-
-| | |
-|---|---|
-| **Use it when** | You're in a fresh copy of the template and know (or brainstormed) the stack |
-| **It asks you** | Only what `docs/brainstorm.md` leaves out. Without that file: name, purpose, framework, database, hosting, login needs, database name, non-goals |
-| **It proposes** | (1) a capabilities table: each concern with a proposed option and fitting alternatives; (2) after that, a scaffold plan: folders, every package with a reason, config files, scripts. Before the plan, it checks the current official docs for every chosen library |
-| **It creates** | The scaffolded project (using the framework's official generator, then the profiles on top), `docs/stack-profile.md`, a filled `CLAUDE.md`, a project README replacing the template's, `docs/architecture.md`, `docs/adr/001-stack.md`, and `docs/prd/<name>.md` |
-| **It runs** | `pnpm install`, turns on the commit checks and verifies them, then `pnpm check` and `pnpm build` |
-| **It never** | Writes anything before you approve the plan; overwrites the template's own files; invents your users or acceptance criteria; approves a package's install script without asking you |
-
-If a framework or library you want isn't in the catalog, it stops and tells you to run `/rafi:add-stack` or `/rafi:add-capability` first.
-
-### 3.3 `/rafi:add-stack <name>`: add a framework or database
-
-| | |
-|---|---|
-| **Use it when** | Your framework (say SvelteKit, Django) or database (say MySQL) isn't in the catalog |
-| **It asks you** | Kind (framework or database), language and exact versions, package manager and tools, deployment, and which databases a framework will pair with |
-| **It does** | Reads the official docs for those exact versions, then drafts a profile in the standard layout with a Sources list. For non-Node stacks, it also lists every template file to change |
-| **It creates** | `docs/stack-drafts/<kind>-<name>.md` after your approval |
-| **Next** | Use it now: give the draft path when bootstrap asks for a framework or database. Keep it for all projects: copy it into this repo (section 8) |
-
-### 3.4 `/rafi:add-capability <concern> [option]`: add a library
-
-Two modes, picked automatically:
-
-**Add mode:** the concern is in the catalog and the project has a `docs/stack-profile.md`.
-```
-you:    /rafi:add-capability search
-claude: Your stack: astro (static), no database.
-        Proposed: pagefind (adopt). No other option fits a static site.
-you:    ok
-claude: (checks Pagefind's current docs) Plan: add pagefind as a dev dependency,
-        build script "astro build && pagefind --site dist", search dialog in the
-        header, data-pagefind-body on lesson pages. Approve?
-```
-After approval it builds, runs `pnpm check` and `pnpm build`, adds the choice to `docs/stack-profile.md`, writes an ADR, and ends with a commit message. It never commits.
-
-**Draft mode:** the concern or the library you named isn't in the catalog.
-```
-you:    /rafi:add-capability payments paypal
-```
-It asks which frameworks it must work with, hosted or self-hosted, and budget. It researches the official docs and drafts the entry in the catalog format (status, "works with", setup, checks). Once you approve, it's saved to `docs/stack-drafts/capability-<concern>.md`. Use it in this project right away, or copy it into this repo for every project (section 8).
-
-### 3.5 `/rafi:discuss <topic>`: talk through an idea in an existing project
-
-| | |
-|---|---|
-| **Use it when** | The project already exists and you have a new idea or want to change something: a new feature, a new library, switching a technology, or just thinking a problem through |
-| **It reads** | Your stack profile, architecture, specs, decision records, and earlier discussions, plus any code the topic touches |
-| **It asks you** | Up to four plain-language questions at a time: the problem and who it's for, what changes for the user, constraints, and how it relates to what exists |
-| **It proposes** | 2–3 approaches that fit your **current** stack, with effort, running cost, what changes, and risks. Then it checks the catalog for any new library the choice needs, and flags anything that would change an existing stack choice |
-| **It creates** | `docs/discussions/<date>-<topic>.md`: the problem, approaches, the choice (or "no decision"), new libraries, open questions. Earlier discussions are never overwritten |
-| **It never** | Writes code, installs anything, or edits existing docs |
-
-Its `Next:` line depends on the outcome: a new feature → `/rafi:spec`; a new library → `/rafi:add-capability`; something the catalog lacks → `/rafi:add-capability <concern> <library>` or `/rafi:add-stack`; a change to an existing choice → a decision record, then `/rafi:add-capability`; no decision → nothing, the notes are saved.
-
-```
-you:    /rafi:discuss online class booking
-claude: 1. Who books: existing students only, or anyone?  2. Do they pay when booking?
-        3. How many classes per week?  4. Any deadline?
-...
-claude: A) Embed a booking service (no logins to build)   B) Build booking with logins
-        Recommendation: A. New capability: none needed.
-        Saved: docs/discussions/2026-10-01-online-class-booking.md
-        Next: /rafi:spec class booking
+main ──●────────────────────●──────────────●───   production, tag vX.Y.Z on every merge
+        \                  / \            /
+dev      ●──●─────●──────●───●──────●────●─────   integration, deploys to staging
+             \   / \    /            \  /
+feat/a        ●─●   \  /    hotfix/x  ●●  (from main, back into dev)
+fix/b                ●●
 ```
 
-**Brainstorm or discuss?** Brainstorm is for a new project and chooses the whole stack. Discuss works inside an existing project and its stack. Keeping them separate means changes to one can never break the other, or the bootstrap step that depends on brainstorm.
-
-### 3.6 `/rafi:spec <feature>`: write a feature spec
-
-| | |
-|---|---|
-| **Use it when** | You're about to build a feature and need its spec in `docs/prd/` |
-| **It asks you first** | **A)** "Ask me questions and write it for me", or **B)** "Create the file and I'll fill it in myself, then you review it" |
-| **A: Claude asks** | Up to four plain-language questions at a time: the problem, who uses it, what's in and out, what the user sees and does, what happens when something goes wrong. Then it drafts the acceptance criteria (Given / When / Then), covering the normal case, bad or empty input, not found, no permission (if the project has logins), and limits. Criteria you didn't state yourself are marked **(proposed)**, and you confirm, change, or remove each one |
-| **B: you fill it** | It creates `docs/prd/<feature>.md` from the template with a hint per section and one finished example criterion, then waits. When you say you're done, it reviews the file: vague criteria ("works well"), missing failure cases, scope that no criterion covers. It suggests a rewrite for each problem and edits only what you accept |
-| **It creates** | `docs/prd/<feature>.md` |
-| **It never** | Asks about code or libraries; writes code or a plan; keeps a requirement you didn't agree to |
-
-```
-you:    /rafi:spec lesson tags
-claude: How do you want to write this spec?
-        A) Ask me questions and write it for me
-        B) Create the file and I'll fill it in myself, then you review it
-you:    A
-claude: 1. What problem do tags solve for students?  2. Who adds the tags?
-        3. Should a student be able to see all tags somewhere?  4. Anything out of scope?
-...
-claude: Acceptance criteria:
-        - Given a lesson tagged "grammar", when I open /tags/grammar, then I see that lesson.
-        - Given a tag with no lessons, when I open its page, then I get a 404. (proposed)
-        Keep, change, or remove the proposed ones?
-```
-**Next step:** `/clear`, then `/rafi:plan-feature lesson tags`.
-
-### 3.7 `/rafi:plan-feature <name>`: plan a feature
-
-| | |
-|---|---|
-| **Use it when** | A feature has a spec in `docs/prd/` (from `/rafi:spec`) and you're ready to build. Without a spec, it tells you to run `/rafi:spec` first |
-| **It reads** | The PRD, `docs/architecture.md`, `docs/stack-profile.md`, and the code the feature touches |
-| **It asks you** | For acceptance criteria if they're missing or not testable. It never invents them |
-| **It proposes** | Slices in build order (each a thin vertical piece: data → logic → route → tests → UI), the files for each, data and API changes, test cases per slice, risks, and which audits each slice will trigger |
-| **It never** | Writes code or creates files |
-
-### 3.8 `/rafi:slice <name>`: build one piece
-
-| | |
-|---|---|
-| **Use it when** | A plan is approved, and you want to build the next piece |
-| **It does** | 1. Restates the slice in three lines and builds only that. 2. Writes tests (the test-writer agent for large suites). 3. Runs `pnpm check` until it passes. 4. Has the code-reviewer agent review the change and fixes Blocker and Major findings. 5. Runs the audits that match the change and fixes Critical and High findings; the rest stay logged. 6. Adds a browser test for a new user-facing flow |
-| **It reports** | Five lines or fewer, then the commit message alone on its own line (such as `feat(tags): add tag pages`), then a `Next:` line: the next slice from the plan, or push and merge after the last one |
-| **It never** | Starts without an approved plan; commits |
-
-### 3.9 `/rafi:fix-issue <description>`: fix a bug
-
-| | |
-|---|---|
-| **It does** | 1. Writes a test that fails because of the bug (if it can't reproduce the bug in a test, it explains why and stops). 2. States the root cause in one sentence. 3. Makes the smallest fix, with no unrelated changes. 4. Runs `pnpm check`. 5. Runs a security review if the cause is a security or data problem |
-| **It reports** | Root cause, fix, test added, then the commit message alone on its own line (such as `fix(tags): match tags case-insensitively`), then a `Next:` line |
-| **It never** | Patches symptoms instead of the cause; commits |
-
-### 3.10 `/rafi:release-check`: before launch
-
-Runs `pnpm check` and `pnpm build`, plus `pnpm test:e2e` and `pnpm lighthouse` if they exist, then the security, performance, and accessibility audits on the whole project (and SEO if the site has public pages). It reports Critical and High findings only and ends with a verdict, **ship** or **hold**, listing the blockers. It reminds you of the checks code can't do: search engine setup, real-user speed data, keyboard and screen-reader walkthrough, hosting settings, rollback plan.
-
-### 3.11 `/rafi:retro`: learn from a session
-
-Reviews the conversation and the audit logs for corrections, repeated instructions, failed commands, recurring findings, and time-wasting surprises. It proposes at most seven items, each sorted into one of:
-- a project gotcha (goes in `CLAUDE.md`)
-- a project rule (goes in `.claude/rules/`)
-- mechanical enforcement (a hook or lint rule, with the exact config)
-- a plugin improvement (a list you paste into this repo)
-
-It applies only what you approve. It never edits the plugin itself.
-
-### 3.12 `/rafi:scope [agreed]`: scope of work for the client and for you
-
-| | |
-|---|---|
-| **Use it when** | You need a scope of work to show a client, a detailed breakdown to estimate the budget from, or a progress update. Run it at any stage: after brainstorm, mid-build, or before launch |
-| **It reads** | The brainstorm, stack profile, architecture, specs, discussions, decision records, the code, the tests, and `git log` |
-| **It asks you** | On the first run only: client and project name, what the client provides and by when, dates, revision rounds. It never invents a date or a requirement |
-| **It creates** | `docs/scope/client-scope.md`: short and in everyday words for the client (what they get, what's not included, what you need from them, key dates, paid services, progress). `docs/scope/work-scope.md`: every deliverable broken down in full (pages, flows, data, components, integrations, content, tests, audits, setup and launch work, client dependencies, assumptions, risks) so you can estimate the budget yourself |
-| **Progress** | Each deliverable is marked Done, In progress, or Not started in both files. Done means built and covered by a test; when unsure, it picks the lower status |
-| **Agreement** | `/rafi:scope agreed` marks both files as agreed and saves a baseline. After that, anything new appears under "Changes since agreement" so you can price it before building it |
-| **It never** | Writes code, edits other docs, or writes hours, rates, or prices. Both files are safe to keep in the repo |
-
-### 3.13 The four audits
-
-| Command | Checks against | Run it when you changed |
-|---|---|---|
-| `/rafi:security-audit [scope]` | An OWASP-aligned standard, 15 sections | Login, sessions, APIs, uploads, packages |
-| `/rafi:seo-audit [scope]` | An SEO standard, 10 sections | Public pages, URLs, page titles and descriptions |
-| `/rafi:performance-audit [scope]` | A performance standard, 8 sections | Queries, lists, pages, heavy libraries |
-| `/rafi:accessibility-audit [scope]` | A WCAG 2.2 AA standard, 7 sections | UI, forms, layout, colors |
-
-**Scope:** `diff` (your branch compared with `main`, the default), `full` (everything), or a path or feature name such as `src/features/tags`. How they work is in section 6.
-
-### 3.14 `/rafi:code-review [scope]`
-
-Reviews changes against the production code standards (12 sections: thinking before coding, security, error handling, quality, validation, tests, performance, logging, configuration, frontend, git discipline, documentation). Findings are graded **Blocker / Major / Minor / Nit**, one line each with `file:line`, ending with **approve** or **changes needed**. Run it before any commit you make outside a slice.
-
-## 4. The capabilities catalog (libraries)
-
-### 4.1 The idea, with an analogy
-Think of a restaurant menu with a **chef's recommendation** on each course. For every job a project might need done (icons, fonts, search, a CMS, payments…), the catalog lists a few **tested options** instead of every library in existence, marks which one is the house default for your framework, and explains when to pick another. You usually just say "yes", but you can always order something else.
-
-Industry teams call this a **paved road** (a small set of approved choices, with a template that sets them up) combined with a **tech radar** (a status for each technology).
-
-### 4.2 Status: adopt, trial, hold
-
-| Status | Meaning | Does bootstrap propose it? |
-|---|---|---|
-| **adopt** | A safe default. Use it without much thought | Yes, often as the default |
-| **trial** | Good when its "pick when" fits your case; check it a little more carefully | Yes, as an alternative |
-| **hold** | Don't start new projects with it. Kept only to explain why | Never |
-
-Each option also has **works with** (which frameworks and databases it fits), so you're never offered an option that doesn't work with your stack.
-
-### 4.3 Everything in the catalog
-
-| Concern | Options (status) | Default |
-|---|---|---|
-| **styling** | tailwind (adopt), tailwind-typography (adopt, add-on for Markdown text), native-css (adopt), runtime-css-in-js (hold) | tailwind; add typography for Markdown or CMS text |
-| **ui-components** | none (adopt), shadcn (adopt), react-aria-components (trial), daisyui (trial), runtime-css-in-js-kits (hold) | React frameworks: shadcn. Astro: none |
-| **icons** | lucide (adopt), simple-icons (adopt, brand logos), iconify-astro-icon (trial), heroicons (trial), phosphor (trial), icon-fonts (hold) | lucide; add simple-icons for brand logos |
-| **fonts** | astro-fonts (adopt), next-font (adopt), fontsource (adopt), system-stack (adopt), google-fonts-cdn (hold) | astro: astro-fonts. nextjs: next-font. Vite apps: fontsource |
-| **cms** | none (adopt), keystatic (adopt), decap (trial), sanity (adopt), payload (trial) | none; keystatic for a git-based editor; sanity for structured content |
-| **search** | pagefind (adopt), postgres-fts (adopt), meilisearch (trial), algolia (trial) | static sites: pagefind. Apps on Postgres: postgres-fts |
-| **forms** | server-endpoint (adopt), turnstile (adopt, spam protection add-on), web3forms (adopt), formspree (trial) | with a server: server-endpoint + turnstile. Static: web3forms |
-| **auth** | better-auth (adopt), clerk (trial), authjs (hold), lucia (hold) | better-auth |
-| **email** | resend (adopt), postmark (adopt), aws-ses (trial), smtp (trial) | resend |
-| **analytics** | umami (adopt), plausible (adopt), cloudflare-web-analytics (adopt), posthog (trial), google-analytics (hold) | content sites: umami. Apps with funnels: posthog |
-| **payments** | stripe (adopt), razorpay (adopt), paddle (trial), stripe-managed-payments (trial), lemon-squeezy (hold) | India: razorpay. Elsewhere: stripe |
-| **structured-data** | hand-written-jsonld (adopt), astro-seo-schema (trial), astrolib-seo (hold) | astro: hand-written-jsonld; academic sites add Google Scholar `citation_*` tags |
-
-Each concern's file explains *why* for every status (for example, Lucia is on hold because the library was deprecated in 2025). The files are in `plugins/rafi/stacks/capabilities/`.
-
-### 4.4 What one entry looks like
-Each capability file has three parts:
-
-```
-# Capability: Search
-Ask when: the site has more than about 20 content pages, or the spec mentions search.
-Default: static sites → pagefind. Apps on postgres → postgres-fts.
-
-## Options                                          <- the summary: the only part
-| Option | Status | Pick when | Works with | Cost |      bootstrap and brainstorm read
-| pagefind | adopt | static content site ... | astro, any static output | free |
-
-## Option: pagefind                                 <- copied into your project
-Setup: packages, config, scripts                       only if you choose it
-Conventions: rules Claude follows
-Security / Performance / Accessibility checks: extra items the audits check
-
-## Shared                                           <- copied along with whichever
-Rules that apply whatever option you pick              option you choose
-```
-
-**Why the split matters:** only the options you choose end up in your project's `docs/stack-profile.md`, so an option never says "same as the other option". Anything common goes in `## Shared`.
-
-### 4.5 How a choice reaches your project
-1. Brainstorm or bootstrap reads each file's summary and proposes a choice per concern.
-2. You confirm or swap.
-3. Bootstrap checks the chosen option against the library's **current** official docs, so an outdated note in the catalog doesn't reach your project.
-4. It copies the chosen option (plus `## Shared`) into `docs/stack-profile.md`, under a Stack table like this:
-   ```
-   | Concern  | Choice                   |
-   |----------|--------------------------|
-   | Framework| astro (static output)    |
-   | styling  | tailwind                 |
-   | search   | pagefind                 |
-   ```
-5. From then on, every audit reads `docs/stack-profile.md` and adds that option's checks, for example Pagefind's "never index private pages".
-
-### 4.6 Adding to the catalog
-- **During a project:** `/rafi:add-capability <concern> <library>` drafts it (3.4).
-- **By hand:** copy `plugins/rafi/stacks/_capability-template.md`, fill it in, and follow section 8.
-
-Rules for a good entry: 2–5 options, never "every package"; every rule specific and checkable ("the secret key is a server-only env var", not "be secure"); every audit check points at a section number of the standard; "works with" holds only profile names; each option stands alone.
-
-## 5. Stack profiles (frameworks and databases)
-
-### 5.1 What a profile is
-A **stack profile** is a short file with the rules for one framework or one database: folder layout, how the standard scripts map to that technology, conventions, and extra checks for each audit. The general standards stay the same for every project; profiles add the technology-specific parts.
-
-| Kind | Folder | Covers | Available now |
+| Branch | From | Into | Merge |
 |---|---|---|---|
-| **Framework** | `plugins/rafi/stacks/frameworks/` | Folders, layers, tooling, SEO, accessibility, speed | `nextjs`, `astro`, `react-spa`, `react-express`, `wordpress` |
-| **Database** | `plugins/rafi/stacks/databases/` | Client, migrations, queries, tests, security, speed | `mongodb`, `postgres` |
+| `feat/`, `fix/`, `chore/`, `docs/`, `refactor/`, `test/`, `perf/`, `ci/` | `dev` | `dev` | `--no-ff` |
+| `release/x.y.z` (optional) | `dev` | `main`, then `dev` | `--no-ff` |
+| `hotfix/<name>` | `main` | `main` (patch tag), then `dev` | `--no-ff` |
+| `dev` | `main` (once) | `main` at release | `--no-ff` |
 
-A project has **one framework**, **zero or one database**, and any number of **capabilities** (section 4).
+Commits: `type(scope): subject`, scope required, header at most 72 characters, no attribution lines. Merge mode per project in `CLAUDE.md`: `local` (Claude merges and pushes) or `github` (Claude opens the PR; you merge with **Create a merge commit**).
 
-### 5.2 Which framework for what
-
-| Framework | Best for |
+| Command | Does |
 |---|---|
-| `astro` | Blogs, docs, marketing and portfolio sites. Static by default, very fast |
-| `nextjs` | Public sites that also need server features (logins, dashboards, SEO pages) |
-| `react-spa` | A React frontend for an API that already exists |
-| `react-express` | React plus an Express API in one repo, for apps behind a login |
-| `wordpress` | Client or content sites on WordPress (custom themes and plugins) |
+| `/rafi:branch <type> <name>` | Fetches, fast-forwards `dev`, creates `<type>/<kebab-name>`. Carries or stops on uncommitted work. Refuses `hotfix` and `release` (own commands) |
+| `/rafi:commit [hint]` | Moves off `main`/`dev` to a work branch if needed; stages only the change's files by path (never `.env*`, `secrets/`, build output); splits unrelated changes; `pnpm check`; writes `type(scope): subject` with optional body and `BREAKING CHANGE:` / `Refs:` footers; no attribution; never `--no-verify`; checks the git identity is the owner's; pushes the work branch. Other commands follow this file when they commit |
+| `/rafi:merge [local\|github]` | Updates the branch with `dev` (rebase if never pushed, else merge), runs check, build, code review, triggered audits, adds a changelog entry if missing. `local`: `git merge --no-ff` into `dev`, check, push `dev`, delete the branch. `github`: `/rafi:pr` into `dev` |
+| `/rafi:pr [base]` | Base `dev` by default. Runs check and build, fills the PR template honestly from the diff, spec, and audits, lists breaking changes, commits the changelog entry, pushes, creates the PR with `gh` if available (else a compare URL). Never merges |
+| `/rafi:release [x.y.z] [branch] \| finish` | Version from commits since the last tag (breaking → major, feat → minor, else patch), confirmed by you. Requires release-check **ship**. Bumps version and changelog on `chore/release-x.y.z` (merged into `dev`) or on `release/x.y.z`. Asks your explicit yes, then `dev` (or the release branch) → `main` `--no-ff`, check, build, annotated tag, push `main` and tag, merge the release branch back into `dev`, GitHub Release via `gh` if available. In github mode it opens the PR and `finish` tags after you merge |
+| `/rafi:hotfix <name> \| finish` | Branch from `main`, test-first fix, patch version and changelog, your explicit yes, `--no-ff` into `main`, tag, push, then `--no-ff` back into `dev` (keeping `dev`'s Unreleased section on conflict) |
 
-Combinations are free because the kinds are separate:
+Pushing `main` and tags happens only in `/rafi:release` and `/rafi:hotfix`, after an explicit yes in the conversation.
 
-| Project | Framework | Database |
+## 4. Capabilities catalog
+
+A curated set of vetted options per concern, each with a status:
+
+| Status | Meaning | Proposed? |
 |---|---|---|
-| Blog with SEO and an admin | `nextjs` | `postgres` or `mongodb` |
-| Classic MERN app | `react-express` | `mongodb` |
-| Dashboard with SQL | `react-express` | `postgres` |
-| Portfolio, docs, or marketing site | `astro` | none |
-| React frontend for an existing API | `react-spa` | none |
-| Client site on WordPress | `wordpress` | none (WordPress has its own MySQL) |
+| `adopt` | Safe default | Yes |
+| `trial` | Good when its "pick when" fits; verify more carefully | As an alternative |
+| `hold` | Do not start new projects with it; listed only to explain why | Never |
 
-### 5.3 A technology that isn't in the list
-```
-/rafi:add-stack SvelteKit
-```
-See 3.3. The draft lands in `docs/stack-drafts/`. Use it in the project right away, or copy it into this repo to keep it (section 8).
-
-### 5.4 A stack that isn't Node and pnpm
-The template assumes Node and pnpm. For Python, Go, PHP, and others, the profile's **Adaptation notes** list what to change:
-- create `.claude/typecheck-cmd` and `.claude/format-cmd` (section 7.2)
-- replace the `pnpm` entries in the `.claude/settings.json` allow list
-- replace or drop `.husky/` and `.lintstagedrc.json`
-
-### 5.5 Writing a profile by hand
-Copy `plugins/rafi/stacks/_template.md` and fill each section. Rules must be specific and checkable ("every server action checks ownership"), never vague ("be secure"). Point each security check at the section number of the standard it belongs to. Verify version-specific claims in the official docs, and list the sources. Library choices (styling, icons, …) don't belong in a framework profile; they're capabilities.
-
-## 6. The audits
-
-### 6.1 What an audit is
-An audit is Claude reviewing your code against a written checklist (a **standard**) and logging what it finds. There are four standards plus the code-review standard:
-
-| Standard | Folder | Sections |
+| Concern | Options | Default |
 |---|---|---|
-| Security (OWASP-aligned) | `plugins/rafi/skills/security-audit/references/` | `01-authentication` to `15-third-party-integrations` |
-| SEO | `.../seo-audit/references/` | `01` to `10` |
-| Performance | `.../performance-audit/references/` | `01` to `08` |
-| Accessibility (WCAG 2.2 AA) | `.../accessibility-audit/references/` | `01` to `07` |
-| Code review | `.../code-review/references/` | `01` to `12` |
+| styling | tailwind, tailwind-typography (add-on), native-css, runtime-css-in-js (hold) | tailwind; typography for Markdown text |
+| ui-components | none, shadcn, react-aria-components (trial), daisyui (trial), runtime-css-in-js-kits (hold) | React: shadcn. Astro: none |
+| icons | lucide, simple-icons (brands), iconify-astro-icon (trial), heroicons (trial), phosphor (trial), icon-fonts (hold) | lucide (+ simple-icons) |
+| fonts | astro-fonts, next-font, fontsource, system-stack, google-fonts-cdn (hold) | astro: astro-fonts. nextjs: next-font. Vite: fontsource |
+| cms | none, keystatic, sanity, decap (trial), payload (trial) | none; keystatic (git-based); sanity (structured) |
+| search | pagefind, postgres-fts, meilisearch (trial), algolia (trial) | static: pagefind. Postgres apps: postgres-fts |
+| forms | server-endpoint, turnstile (add-on), web3forms, formspree (trial) | server: server-endpoint + turnstile. Static: web3forms |
+| auth | better-auth, clerk (trial), authjs (hold), lucia (hold) | better-auth |
+| email | resend, postmark, aws-ses (trial), smtp (trial) | resend |
+| analytics | umami, plausible, cloudflare-web-analytics, posthog (trial), google-analytics (hold) | content: umami. Funnels: posthog |
+| payments | stripe, razorpay, paddle (trial), stripe-managed-payments (trial), lemon-squeezy (hold) | India: razorpay. Elsewhere: stripe |
+| structured-data | hand-written-jsonld, astro-seo-schema (trial), astrolib-seo (hold) | hand-written-jsonld |
+| observability | sentry, pino, uptime-monitor, opentelemetry (trial), console-only (hold) | server: sentry + pino + uptime-monitor. Static: sentry + uptime-monitor |
+| rate-limiting | express-rate-limit, rate-limiter-flexible, upstash-ratelimit, cloudflare-rules (trial), hand-rolled-map (hold) | Express: express-rate-limit. Long-running host: rate-limiter-flexible. Serverless: upstash-ratelimit |
+| file-storage | cloudflare-r2, aws-s3, uploadthing (trial), local-disk (hold) | cloudflare-r2 |
+| background-jobs | pg-boss, bullmq, inngest (trial), trigger-dev (trial), fire-and-forget (hold) | Postgres: pg-boss. Redis or Mongo: bullmq. Serverless: inngest |
 
-Each folder also has `00-overview.md` (severity scale, how to judge) and an appendix of the standards referenced.
-
-### 6.2 How an audit runs, step by step
-1. It runs in a **separate context**, so all its reading doesn't fill up your main chat.
-2. It reads the short `SKILL.md`, whose table maps kinds of change to section numbers. Example from security: "New endpoint, server action, API route → sections 3, 4, 6, 8". It reads **only** those sections. The security standard is about 585 lines; an upload change reads only the upload and access-control sections.
-3. It reads `docs/stack-profile.md` and adds the framework, database, and capability checks.
-4. It judges every item: **Pass**, **Fail**, **N/A** (with a one-line reason), or **Needs manual verification** (things code can't prove, like a screen-reader test). Every Fail cites `file:line`; every Pass names what satisfies it.
-5. It writes findings to `docs/audits/<name>.md` in your project and replies with only the Fails and Needs-verification items, at most 30 lines.
-6. **It only reports. It never edits code.** Fixes happen in `/rafi:slice` or `/rafi:fix-issue`, where tests and review surround them.
-
-### 6.3 Severity scales
-
-| Security | Meaning |
-|---|---|
-| **Critical** | Remote, unauthenticated, full compromise or data breach |
-| **High** | Auth bypass, privilege escalation, significant data exposure |
-| **Medium** | Needs preconditions, limited damage |
-| **Low** | Hardening and best-practice gaps |
-
-| Accessibility | Meaning |
-|---|---|
-| **Critical** | A keyboard or screen-reader user cannot complete a core task |
-| **High** | A WCAG Level A failure, or a Level AA failure with no workaround |
-| **Medium** | A Level AA failure with a workaround |
-| **Low** | A best-practice gap |
-
-The SEO and performance standards define their scales in their own `00-overview.md`. Code review uses **Blocker / Major / Minor / Nit**. In a slice, Critical and High (audits) and Blocker and Major (review) are fixed before the slice is reported done.
-
-### 6.4 Reading a findings log
-Example `docs/audits/security.md` in a project:
+### File format (`plugins/rafi/stacks/capabilities/<concern>.md`)
 ```
-| Date       | Section | Finding                                              | Severity | Status           |
-|------------|---------|------------------------------------------------------|----------|------------------|
-| 2026-10-02 | §13     | Contact endpoint has no rate limit (src/actions.ts:14) | Medium   | Fixed 2026-10-03 |
-| 2026-10-02 | §10     | CSP header not set on the host                        | High     | Open             |
-| 2026-10-02 | §5      | Confirm Turnstile secret is set in hosting env        | —        | Needs verification |
+# Capability: <Concern>
+Kind: capability
+Ask when: <condition under which brainstorm/bootstrap raise it>
+Default: <framework → option>
+Verified: <month year>
+
+## Options                        <- summary: everything above the first "## Option:"
+| Option | Status | Pick when | Works with | Cost |
+
+## Option: <name>                 <- copied into the project only if chosen
+Setup / Conventions / Security, Performance, Accessibility, SEO checks / Sources
+
+## Shared                         <- copied with whichever option is chosen
 ```
-Rows are never deleted; fixed ones are marked **Fixed** with a date, so the log doubles as a history.
+Rules: 2–5 options; `hold` options appear only in the table; every option section stands alone (never "same as X"); "Works with" holds profile names, `any`, and short qualifiers; every rule is specific and checkable; audit checks cite the standard's section (`§n`). `tools/check-plugin.sh` enforces the structure.
 
-### 6.5 Changing a standard
-Edit the section file, then follow section 8. If you add or renumber a section, update the mapping table in that audit's `SKILL.md`, or audits will read the wrong sections.
+### How a choice reaches a project
+Brainstorm or bootstrap reads only the summaries → you confirm → the chosen option is verified against current docs → its section plus `## Shared` is copied into `docs/stack-profile.md` → every audit applies its checks from then on.
 
-## 7. The automatic parts: agents and hooks
+## 5. Stack profiles
 
-You never call these yourself.
+| Kind | Folder | Available |
+|---|---|---|
+| Framework | `plugins/rafi/stacks/frameworks/` | `astro`, `nextjs`, `react-spa`, `react-express`, `wordpress` |
+| Database | `plugins/rafi/stacks/databases/` | `postgres`, `mongodb` |
 
-### 7.1 Agents (helpers Claude hands work to)
+A project has one framework, zero or one database, and any number of capabilities.
+
+| Framework | For |
+|---|---|
+| `astro` | Content, docs, marketing, portfolio sites; static by default |
+| `nextjs` | Public sites with server features (logins, dashboards, SEO pages) |
+| `react-spa` | A React frontend for an existing API |
+| `react-express` | React plus an Express API in one repo, apps behind a login |
+| `wordpress` | Client or content sites with custom themes and plugins |
+
+Profile sections (`stacks/_template.md`): Stack, Scaffold contract, Conventions, Security / SEO / Performance / Accessibility checks, **Migration checks** (databases: locking operations and safe alternatives, used by `/rafi:migration`, `/rafi:slice`, `/rafi:code-review`), **CI** (what `ci.yml` needs, such as a Postgres service; applied by bootstrap and sync-template), Adaptation notes (non-Node stacks), Sources.
+
+Non-Node stacks: the profile's adaptation notes list the template files to change, plus two one-line files the hooks read: `.claude/typecheck-cmd` (for example `mypy .`) and `.claude/format-cmd` (for example `ruff format`; the file path is appended).
+
+## 6. Audits
+
+| Standard | References | Sections |
+|---|---|---|
+| Security (OWASP-aligned) | `skills/security-audit/references/` | 01 authentication … 15 third-party integrations |
+| SEO | `skills/seo-audit/references/` | 01–10 |
+| Performance | `skills/performance-audit/references/` | 01–08 |
+| Accessibility (WCAG 2.2 AA) | `skills/accessibility-audit/references/` | 01–07 |
+| Code review | `skills/code-review/references/` | 01–12 |
+
+Each folder has `00-overview.md` (severity scale, statuses) and an appendix of standards referenced.
+
+**How one runs:** in a forked context → reads its `SKILL.md` mapping table and only the matching sections → adds the stack profile's checks → measures with read-only commands (security: `pnpm audit --prod`, `pnpm outdated`; performance: `pnpm build`, `pnpm lighthouse`; SEO: built output, Lighthouse; accessibility: `pnpm test:e2e` with axe) → judges each item Pass, Fail (`file:line`), N/A (reason), or Needs manual verification → appends to `docs/audits/<name>.md` (`Date | Section | Finding | Severity | Status`; rows never deleted, fixed ones marked Fixed with a date) → replies with Fails and verifications only, at most 30 lines. Audits never edit code.
+
+| Scope | Meaning |
+|---|---|
+| `diff` (default) | Current branch against its base |
+| `full` | Whole project |
+| a path or feature | That part only |
+
+Severity: security and accessibility use Critical / High / Medium / Low (defined in each `00-overview.md`); code review uses Blocker / Major / Minor / Nit. Slices fix Critical, High, Blocker, and Major before reporting.
+
+Changing a standard: edit the section file; if you add or renumber sections, update the mapping table in that audit's `SKILL.md`.
+
+## 7. Agents and hooks
 
 | Agent | Job | Limits |
 |---|---|---|
-| `rafi:code-reviewer` | Reviews a change against the code standards; Blocker / Major / Minor / Nit | Read-only |
-| `rafi:security-auditor` | Security review of a change, following the security audit | Read-only, except it may write `docs/audits/security.md` |
-| `rafi:test-writer` | Writes tests covering happy path, invalid input, unauthorized access, not-found, boundaries, and concurrency where relevant | Writes tests only, never source code. Reports bugs with `file:line` instead of fixing them. Never weakens an assertion to make a test pass |
+| `rafi:code-reviewer` | Reviews a diff against the code standard | Read-only |
+| `rafi:security-auditor` | Security audit of a change | Writes only `docs/audits/security.md`; may run `pnpm audit`, `pnpm outdated`, `pnpm why` |
+| `rafi:test-writer` | Writes tests for the standard cases | Test files only; reports bugs instead of fixing; never weakens assertions |
 
-### 7.2 Hooks (scripts that run at set moments)
-
-| When | What runs | What you notice |
+| Hook | Script | Effect |
 |---|---|---|
-| After Claude edits or writes a file | `scripts/format-file.sh` tidies that file | Code stays consistently formatted without asking |
-| When Claude finishes a reply | `scripts/verify-on-stop.sh` runs a quick type check | If it fails, Claude sees the errors and fixes them before handing back. It retries once per reply, so it can't loop |
+| PreToolUse (Bash, Read, Edit, Write) | `scripts/guard.sh` | Blocks, with a reason: reading `.env*` (not `.env.example`) or `secrets/`, directly or via `cat`/`grep`/…; `rm` with recursive + force in any spelling; `--no-verify`, `commit -n`, `HUSKY=0`; editing lockfiles; direct commits on `main`/`dev` (the repository's first commit excepted); merges into them without `--no-ff` (`--ff-only origin/<same>` allowed for syncing); `git pull` on them without `--ff-only`; rebasing them; pushing them unless the tip is a merge commit (or the root commit); `--force` anywhere and `--force-with-lease` on `main`/`dev`; attribution in commit, merge, or tag messages. Tracks `git switch` within one command line |
+| PostToolUse (Edit, Write) | `scripts/format-file.sh` | Formats the edited file: `.claude/format-cmd`, else Prettier in pnpm projects. Never blocks |
+| Stop | `scripts/verify-on-stop.sh` | Runs `.claude/typecheck-cmd`, else `pnpm typecheck`; on failure Claude must fix before finishing (one retry, no loops). Skipped when commit, status, diff, and untracked files are unchanged since the last pass |
 
-Both hooks work with any language:
-- **Formatter:** runs the first line of `.claude/format-cmd` if the project has it (the edited file's path is added at the end). Otherwise, in a pnpm project, Prettier. Otherwise nothing.
-- **Type check:** runs the first line of `.claude/typecheck-cmd` if it exists. Otherwise `pnpm -s typecheck` if `package.json` has a `typecheck` script. Otherwise nothing.
+All hooks need `jq`. Only you can disable the guard for a session: `RAFI_GUARD=off claude`. Its rules are tested by `tools/test-guard.sh`.
 
-Example for a Python project: `.claude/format-cmd` contains `ruff format`, and `.claude/typecheck-cmd` contains `mypy .`.
+## 8. Changing the plugin
 
-Both hooks need `jq`. Neither can damage your work: the formatter ignores its own failures, and the type check only reports.
-
-## 8. Maintaining the plugin (worked example)
-
-**The example:** adding **Tabler Icons** as a new option in the icons capability, from start to finish. The same steps apply to any change.
-
-### 8.1 Get a working copy (once per computer where you edit)
 ```bash
-git clone git@github.com:therafiniac/claude-plugins.git
-cd claude-plugins
+git clone git@github.com:therafiniac/claude-plugins.git && cd claude-plugins
 ```
 
-### 8.2 Make the change
-Open `plugins/rafi/stacks/capabilities/icons.md`:
-1. Add a row to the `## Options` table:
-   ```
-   | tabler | trial | Very large outline set with a consistent 24px grid | astro, nextjs, react-spa, react-express | free (MIT) |
-   ```
-2. Add a section **before** `## Shared`:
-   ```
-   ## Option: tabler
-   Setup: <packages per framework, checked in Tabler's official docs>
-   Sources: <official documentation URLs>
-   ```
-   Keep it standalone: don't write "same as lucide". The common icon rules are already in `## Shared`.
-3. Update `Verified:` at the top if you re-checked the other options.
-
-Where things live, for other kinds of change:
-
-| You want to change | Edit |
+| Change | File |
 |---|---|
-| A library option | `plugins/rafi/stacks/capabilities/<concern>.md` |
-| A framework or database profile | `plugins/rafi/stacks/frameworks/<name>.md` or `.../databases/<name>.md` |
-| How a command behaves | `plugins/rafi/skills/<name>/SKILL.md` |
-| An audit standard | The section file in `plugins/rafi/skills/<audit>/references/` |
-| A hook | `plugins/rafi/scripts/*.sh` or `plugins/rafi/hooks/hooks.json` |
-| An agent | `plugins/rafi/agents/<name>.md` |
+| Command behavior | `plugins/rafi/skills/<name>/SKILL.md` |
+| Library option | `plugins/rafi/stacks/capabilities/<concern>.md` |
+| Framework or database | `plugins/rafi/stacks/frameworks/<name>.md`, `.../databases/<name>.md` |
+| Audit standard | `plugins/rafi/skills/<audit>/references/NN-*.md` |
+| Hook | `plugins/rafi/scripts/*.sh`, `plugins/rafi/hooks/hooks.json` |
+| Agent | `plugins/rafi/agents/<name>.md` |
 
-### 8.3 Raise the version (don't skip this)
-Change `version` in **both** files, to the **same** number:
-- `plugins/rafi/.claude-plugin/plugin.json`
-- `.claude-plugin/marketplace.json`
+1. **Branch** from `main` (`feat/<name>`), make the change.
+2. **Version**: raise `version` in both `plugins/rafi/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`, to the same number. Without it no machine receives the change. Patch: fixes. Minor: new option, capability, profile, command, or section. Major: changed behavior of existing commands or hooks.
+3. **Check**:
+   ```bash
+   claude plugin validate . && claude plugin validate ./plugins/rafi
+   tools/check-plugin.sh     # manifests, versions, skills, agents, catalog structure, scripts
+   tools/test-guard.sh       # guard rules
+   ```
+   CI (`.github/workflows/validate.yml`) runs the same on every PR and push to `main`, and on PRs fails if `plugins/rafi` changed without a version bump.
+4. **Evals**: `claude plugin eval plugins/rafi --runs 3 --no-publish` (real sessions on your account; a few cents per run). Cases live in `plugins/rafi/evals/<case>/` (`prompt.md` + `graders/criteria.md`); add one with `claude plugin eval init --bare <name>` from `plugins/rafi`. Judge by pass rate across runs.
+5. **Try locally**: `claude plugin marketplace add /full/path/to/claude-plugins`, then run the changed command in a throwaway template copy.
+6. **Commit, merge, push**: `type(scope): subject`, `--no-ff` into `main`.
+7. **Update machines**: `claude plugin marketplace update rafi-tools && claude plugin update rafi@rafi-tools`, restart.
 
-Claude Code keeps every installed copy on its current version until the number changes. **Without a bump, no computer receives your edit.**
-
-| Change | Bump | Example |
-|---|---|---|
-| A typo or small fix | Patch | `1.4.0` → `1.4.1` |
-| A new option, capability, profile, command, or standard section | Minor | `1.4.0` → `1.5.0` (our Tabler example) |
-| Something that changes how existing commands behave | Major | `1.4.0` → `2.0.0` |
-
-### 8.4 Check the files are valid
-```bash
-claude plugin validate .
-claude plugin validate ./plugins/rafi
-```
-**Success looks like** `✔ Validation passed` for both.
-
-### 8.5 Test before you rely on it
-Install from your local folder instead of GitHub, so you can try the change before pushing:
-```bash
-claude plugin marketplace add /full/path/to/claude-plugins
-```
-Then, in a throwaway copy of the template, run the command that uses your change (for the example: `/rafi:add-capability icons tabler`).
-
-### 8.6 Publish
-```bash
-git add plugins/rafi/stacks/capabilities/icons.md .claude-plugin/marketplace.json plugins/rafi/.claude-plugin/plugin.json
-git commit -m "feat(icons): add tabler option"
-git push
-```
-
-### 8.7 Update every computer
-```bash
-claude plugin marketplace update rafi-tools
-claude plugin update rafi@rafi-tools
-```
-Restart Claude Code.
-
-### 8.8 Roll back a bad release
-`git revert` the bad commit, raise the version **again** (for example `1.5.0` → `1.5.1`), then repeat 8.6 and 8.7. Moving forward to a higher number is safer than going back to an old one.
+Roll back: `git revert -m 1 <merge commit>`, raise the version again, publish.
 
 ## 9. Repo layout
 
 ```
 claude-plugins/
-├── README.md                     this manual
-├── .claude-plugin/
-│   └── marketplace.json          the catalog: lists the plugin and its version
-└── plugins/
-    └── rafi/
-        ├── .claude-plugin/
-        │   └── plugin.json       the plugin's name and version
-        ├── skills/               one folder per command, each with a SKILL.md
-        │   ├── brainstorm/  discuss/  bootstrap-project/  add-stack/  add-capability/
-        │   ├── spec/  plan-feature/  slice/  fix-issue/  release-check/  retro/
-        │   ├── scope/
-        │   └── security-audit/  seo-audit/  performance-audit/
-        │       accessibility-audit/  code-review/     (each has references/)
-        ├── agents/               code-reviewer, security-auditor, test-writer
-        ├── hooks/hooks.json      when the hooks run
-        ├── scripts/              format-file.sh, verify-on-stop.sh
-        └── stacks/
-            ├── _template.md             blank framework or database profile
-            ├── _capability-template.md  blank capability
-            ├── frameworks/       astro, nextjs, react-spa, react-express, wordpress
-            ├── databases/        mongodb, postgres
-            └── capabilities/     styling, ui-components, icons, fonts, cms, search,
-                                  forms, auth, email, analytics, payments,
-                                  structured-data
+├── .claude-plugin/marketplace.json     marketplace and plugin version
+├── .github/                            validate.yml, dependabot.yml (actions)
+├── tools/                              check-plugin.sh, test-guard.sh
+└── plugins/rafi/
+    ├── .claude-plugin/plugin.json      name and version
+    ├── skills/                         one folder per command (SKILL.md)
+    │   ├── brainstorm discuss bootstrap-project add-stack add-capability
+    │   ├── spec plan-feature slice fix-issue migration
+    │   ├── branch commit merge pr release hotfix release-check
+    │   ├── status deps sync-template retro scope
+    │   └── code-review security-audit seo-audit performance-audit accessibility-audit (with references/)
+    ├── agents/                         code-reviewer, security-auditor, test-writer
+    ├── hooks/hooks.json                PreToolUse, PostToolUse, Stop
+    ├── scripts/                        guard.sh, format-file.sh, verify-on-stop.sh
+    ├── evals/                          eval cases (results/ is git-ignored)
+    └── stacks/
+        ├── _template.md, _capability-template.md
+        ├── frameworks/                 astro nextjs react-spa react-express wordpress
+        ├── databases/                  postgres mongodb
+        └── capabilities/               16 concerns (section 4)
 ```
 
 ## 10. Design decisions
 
-**Why a private plugin instead of public community plugins?**
-- **Trust.** Hooks run shell commands on every edit and every reply. Installing someone else's plugin means running their scripts on your machine; this one is fully readable because you wrote it.
-- **Fit.** The standards, commit style, and catalog encode *your* choices. A general-purpose plugin would need constant overriding.
-- **Control.** You decide when versions change, and `git revert` is your rollback. A public plugin can change, be renamed, or be abandoned under you.
-- **Cost.** Workflow commands are manual-only, so they use none of Claude's memory until typed. Large public collections often load far more.
-- **It improves itself.** `/rafi:retro` turns your corrections into rules, and useful ones flow back into this repo.
-- **The trade-off:** a public plugin gets many contributors and faster coverage of new tools. Here, coverage grows only as fast as you (or `/rafi:add-stack` and `/rafi:add-capability`) grow it.
-
-**Other decisions:**
-- **A generic core with a swappable technology layer.** The standards don't mention any framework. Everything technology-specific lives in `stacks/`.
-- **Frameworks, databases, and capabilities are separate**, so a new database or library never means rewriting a framework profile.
-- **A curated catalog, not an exhaustive one.** A few vetted options per concern, with status, compatibility, and a default: a paved road plus a tech radar. It grows through `/rafi:add-capability`.
-- **Verify at use time.** Bootstrap and add-capability check the current official docs for the options you pick, because any written catalog goes stale.
-- **Our own brainstorm, not Superpowers'.** It reads this catalog and writes a file that bootstrap reads, and it's manual-only like the other workflow commands.
-- **Standards are split by section**, so an audit loads only what a change needs.
-- **Audits only report.** Changes happen in a slice or a fix, where tests and review surround them.
-- **Findings logs live in each project**, never in this repo.
-- **Claude never commits.** Commands end with a suggested commit message; git stays in your hands.
-- **Every command suggests, never chains.** Each ends with one `Next:` line chosen from the outcome, but never runs it, so you always decide the next step.
-- **Brainstorm and discuss are separate commands.** One job each: brainstorm feeds bootstrap for a new project, discuss works inside an existing one. Neither can break the other.
-- **The hooks default to Node and pnpm but read two optional files**, so other languages work without editing the plugin.
-- **Nothing needs GitHub settings**, secrets, Actions, or paid features.
+- **Private plugin**: hooks run shell commands on every tool call, so they must be code you wrote; the standards encode your choices; you control versions and rollback.
+- **Generic core, swappable stack layer**: standards name no framework; everything technology-specific is in `stacks/`. Frameworks, databases, and capabilities are separate files so any combination works.
+- **Curated catalog, verified at use time**: a few vetted options per concern; bootstrap and add-capability re-check current docs before installing.
+- **Standards split by section**: audits load only what a change needs.
+- **Audits report, slices fix**: changes happen where tests and review surround them.
+- **Suggest, never chain**: each command ends with one `Next:`; you decide.
+- **Claude commits, you own production**: Claude commits and pushes work branches and `dev`; `main` and tags move only in release and hotfix, after an explicit yes. Commits carry no attribution and use your git identity.
+- **`--no-ff` everywhere into `main` and `dev`**: every feature, release, and hotfix is one revertable merge commit.
+- **Hooks for "never"**: what must never happen is blocked by the guard and the project's git hooks, not only written down.
+- **Migrations expand → contract**: every phase is safe while the previous version still runs.
+- **CI without secrets or paid features**; branch rulesets are recommended but need GitHub Pro on private repos, so local hooks enforce the same rules.
 
 ## 11. Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| `/rafi:` shows nothing | Run `claude plugin list`. If `rafi` is missing, repeat the install (section 2) and restart Claude Code |
-| "marketplace not found" or a git error while adding it | Git isn't logged in to GitHub. Set up an SSH key or a token, then retry |
-| You edited the plugin and nothing changed | The version wasn't raised in both files (8.3), the update commands weren't run (8.7), or Claude Code wasn't restarted |
-| `claude plugin validate` reports an error | Read the message. Usual causes: invalid JSON, a missing file, or a `name` in `plugin.json` that doesn't match the marketplace entry |
-| An audit reads the wrong sections | Fix the mapping table at the top of that audit's `SKILL.md` |
-| Bootstrap doesn't offer a profile or library you added | The file must be in `stacks/frameworks/`, `stacks/databases/`, or `stacks/capabilities/` (options need a row in the `## Options` table), and the version must be raised and updated |
-| Bootstrap never proposes an option | Check its status (hold is never proposed) and its "works with" (it must list your framework or `any`) |
-| The type check keeps stopping Claude | Fix the error it reports, or point `.claude/typecheck-cmd` at a command that passes |
-| Hooks print `jq: command not found` | Install `jq` (`sudo dnf install jq`) |
-| The formatter does nothing | The project has neither Prettier nor `.claude/format-cmd`. Add one |
+| `/rafi:` shows nothing | `claude plugin list`; reinstall (section 1); restart. Check git can reach the private repo |
+| A change doesn't arrive | Version not raised in both manifests, update commands not run, or Claude Code not restarted |
+| `claude plugin validate` fails | Invalid JSON, a missing file, or `name` mismatch between `plugin.json` and the marketplace entry |
+| `validate` CI: "version is still x.y.z" | Raise the version (section 8, step 2) |
+| `check-plugin.sh`: option section missing | Every non-`hold` row in `## Options` needs a `## Option: <name>` section, and vice versa |
+| An audit reads the wrong sections | Fix the mapping table in that audit's `SKILL.md` |
+| Bootstrap never offers an option | Its status is `hold`, or "Works with" excludes your framework |
+| "Blocked by rafi guard: …" | Do what the message says. If the rule is wrong for a case, fix `scripts/guard.sh`, add a case to `tools/test-guard.sh`, raise the version. One-off: run the command yourself |
+| "pushing dev whose tip is not a merge commit" | Something was committed or fast-forwarded onto `dev`. Move that commit to a work branch and merge it with `--no-ff` |
+| Type check keeps stopping Claude | Fix the reported error, or point `.claude/typecheck-cmd` at a passing command |
+| `jq: command not found` | Install `jq` |
 
-## 12. FAQ
+## 12. Known caveats
 
-**Do I need this repo on every computer?** No. Only the install commands in section 2. Clone the repo only where you edit the plugin.
-
-**Does it work without the template?** Yes, in any repo. Without the template you won't have `CLAUDE.md`, the rules, the guard rails, the commit checks, or the docs folders. See the template README, section 13.
-
-**Can I use only some commands?** Yes. Each works on its own. `/rafi:code-review` and the four audits need nothing else.
-
-**Is my code sent anywhere?** The plugin runs inside Claude Code on your computer like any other session. It adds no services of its own. Libraries you choose (a CMS, analytics, a form service) have their own privacy terms.
-
-**Can other people use it?** Anyone you give access to the private repo can install it the same way.
-
-**How much of Claude's memory does it use?** Workflow commands: none until typed. Audit and review descriptions are always loaded but short. The catalog is read only by brainstorm, bootstrap, and add-capability, and then only the summaries. `claude plugin details rafi` shows the estimate.
-
-**Why doesn't the catalog list library X?** It's curated on purpose. Add it with `/rafi:add-capability <concern> X`.
-
-## 13. Known caveats
-
-- The manifests pass `claude plugin validate`, the capability files pass a structural check, and a dry-run project (Astro 7, Tailwind 4, astro-icon, the Astro Fonts API, Pagefind) built cleanly. The interactive commands haven't yet been run end to end in a long real project, so watch them in early use.
-- As of September 2026, `astro check` refuses TypeScript 7, so the Astro profile pins `typescript@^6`. Recheck when Astro updates.
-- Library facts (free-tier limits, versions) change. The catalog avoids hard numbers, and bootstrap re-checks the docs for what you pick, but re-verify prices before committing to a paid service.
-- Some standards use Postgres-flavored examples (for example `EXPLAIN` in performance). The database profiles give the exact commands for MongoDB and Postgres.
-- The hooks need `jq`, and their default paths need `pnpm`.
+- The guard parses shell commands with patterns, not a shell parser. It stops mistakes and common spellings, not a determined workaround such as a script that does the same thing.
+- Merge-mode detection reads the `Merge mode:` line in `CLAUDE.md`; projects without it default to `local`.
+- The observability, rate-limiting, file-storage, and background-jobs capabilities were drafted in November 2026 without a line-by-line vendor check. Bootstrap and add-capability verify the chosen option before installing.
+- Library facts (free tiers, versions) change; the catalog avoids hard numbers. Re-check prices before committing to a paid service.
+- As of September 2026, `astro check` refuses TypeScript 7, so the Astro profile pins `typescript@^6`.
+- Eval graders are model-judged; use several runs and read the pass rate.
+- The hooks need `jq`; their default paths need `pnpm`.

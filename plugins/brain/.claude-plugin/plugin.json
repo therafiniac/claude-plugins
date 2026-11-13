@@ -1,0 +1,9 @@
+{
+  "name": "brain",
+  "version": "1.0.0",
+  "description": "Runs The Brain, Rafi's Notion operating system: capture and update anything, daily planning, weekly/monthly/yearly reviews, and the freelance client pipeline from lead to payment.",
+  "author": {
+    "name": "Rafi"
+  },
+  "license": "MIT"
+}

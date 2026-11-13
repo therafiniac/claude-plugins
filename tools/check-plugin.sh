@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Structural checks for the rafi plugin. Run from the repo root: tools/check-plugin.sh
+# Structural checks for the rafi and brain plugins. Run from the repo root: tools/check-plugin.sh
 # Optional: BASE_REF=origin/main also checks that a change to plugins/rafi raised the version.
 set -uo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
@@ -26,7 +26,7 @@ if [ -n "${BASE_REF:-}" ] && git -C "$root" rev-parse -q --verify "$BASE_REF" >/
 fi
 
 # 4. Skills: frontmatter with a matching name and a description.
-for f in "$plugin"/skills/*/SKILL.md; do
+for f in "$plugin"/skills/*/SKILL.md "$root"/plugins/brain/skills/*/SKILL.md; do
   dir=$(basename "$(dirname "$f")")
   head -n 1 "$f" | grep -qx -- '---' || { err "skills/$dir: no frontmatter"; continue; }
   fm=$(sed -n '2,/^---$/p' "$f")
@@ -34,6 +34,22 @@ for f in "$plugin"/skills/*/SKILL.md; do
   [ "$name" = "$dir" ] || err "skills/$dir: name is '$name'"
   printf '%s\n' "$fm" | grep -q '^description: ..' || err "skills/$dir: missing description"
 done
+
+# 4b. brain plugin: manifest parses, versions match, raised when changed, referenced files exist.
+brain="$root/plugins/brain"
+jq empty "$brain/.claude-plugin/plugin.json" 2>/dev/null || err "invalid JSON: plugins/brain/.claude-plugin/plugin.json"
+v_brain=$(jq -r '.version' "$brain/.claude-plugin/plugin.json")
+v_brain_m=$(jq -r '.plugins[] | select(.name=="brain") | .version' "$root/.claude-plugin/marketplace.json")
+[ "$v_brain" = "$v_brain_m" ] || err "brain version mismatch: plugin.json $v_brain, marketplace.json $v_brain_m"
+if [ -n "${BASE_REF:-}" ] && git -C "$root" rev-parse -q --verify "$BASE_REF:plugins/brain/.claude-plugin/plugin.json" >/dev/null 2>&1; then
+  if ! git -C "$root" diff --quiet "$BASE_REF"...HEAD -- plugins/brain; then
+    v_base=$(git -C "$root" show "$BASE_REF:plugins/brain/.claude-plugin/plugin.json" | jq -r '.version')
+    [ "$v_base" != "$v_brain" ] || err "plugins/brain changed but version is still $v_brain (raise it in both manifests)"
+  fi
+fi
+grep -oh '\${CLAUDE_PLUGIN_ROOT}/[A-Za-z0-9_./-]*\.md' "$brain"/skills/*/SKILL.md | sort -u | while read -r ref; do
+  [ -f "$brain/${ref#\$\{CLAUDE_PLUGIN_ROOT\}/}" ] || { echo "FAIL: brain references missing ${ref}"; exit 1; }
+done || fail=1
 
 # 5. Agents: frontmatter with name and description.
 for f in "$plugin"/agents/*.md; do

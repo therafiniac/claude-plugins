@@ -3,7 +3,7 @@ name: accessibility-audit
 description: Run the accessibility audit standard (WCAG 2.2 AA) against this UI. Use only when asked to accessibility-audit, or to check keyboard, screen reader, contrast, forms, or focus behavior.
 argument-hint: "[diff | full | path or feature]"
 context: fork
-allowed-tools: Read Grep Glob Bash(git diff *) Bash(git log *) Bash(git status)
+allowed-tools: Read Grep Glob Bash(git diff *) Bash(git log *) Bash(git status) Bash(pnpm test:e2e) Bash(pnpm test:e2e *)
 ---
 Scope: $ARGUMENTS. Blank or `diff` = current branch vs main. `full` = whole UI. Anything else = a path, component, or route.
 

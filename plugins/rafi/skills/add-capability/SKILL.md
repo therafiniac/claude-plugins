@@ -18,8 +18,8 @@ Pick the mode:
 3. Read only the chosen `## Option:` section and the file's `## Shared` section if it has one. Check its install steps and version constraints against the current official docs (web search and fetch). Propose a plan: dependencies with a reason each, files, config, and scripts. **Stop and wait for my approval.**
 4. Implement it, following the option's conventions. Run `pnpm check` and `pnpm build`. Fix failures.
 5. Update `docs/stack-profile.md`: add or replace the row in the Stack table, and append `# Capability: <concern> (<option>)` followed by the option's section and the file's `## Shared` section if it has one. Write `docs/adr/NNN-<concern>.md` (next free number) with the choice and the alternatives considered.
-6. Report in five lines or fewer. Then the commit message alone on its own line, `type(scope): subject`, with no explanation around it. Do not commit.
-7. Last line: `Next:` commit, then continue what I was doing (for example `/rafi:spec <feature>` if this capability was added for a new feature). It is only a suggestion. Never run it.
+6. Report in five lines or fewer. Then commit following `${CLAUDE_PLUGIN_ROOT}/skills/commit/SKILL.md` and give the commit header.
+7. Last line: `Next:` `/rafi:merge` if this branch is only the capability, else continue what I was doing (for example `/rafi:spec <feature>` if this capability was added for a new feature). It is only a suggestion. Never run it.
 
 ## Draft
 1. Ask me in one message and wait for answers:

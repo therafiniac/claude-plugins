@@ -21,6 +21,7 @@ Read the project's `CLAUDE.md` and `.claude/rules/`. Then read only the referenc
 | Logging, config, env vars | 8, 9 |
 | UI components | 10 |
 | Public API, schema, commits | 11, 12 |
+| Migrations, schema changes | 11, plus the stack profile's `## Migration checks` |
 
 ## Method
 - Check the diff against the baseline. Check that tests cover the cases in section 6.
@@ -30,4 +31,4 @@ Read the project's `CLAUDE.md` and `.claude/rules/`. Then read only the referenc
 
 ## Output
 Findings grouped as Blocker / Major / Minor / Nit, one line each with `file:line`. Then one verdict line: approve or changes needed. No log file.
-Last line: `Next:` on changes needed, fix the Blocker and Major findings and run `/rafi:code-review` again. On approve, commit. If another command called this review, that command gives the final next step instead. It is only a suggestion. Never run it.
+Last line: `Next:` on changes needed, fix the Blocker and Major findings and run `/rafi:code-review` again. On approve, `/rafi:commit`. If another command called this review, that command gives the final next step instead. It is only a suggestion. Never run it.
